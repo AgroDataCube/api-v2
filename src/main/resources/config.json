@@ -1,0 +1,490 @@
+{
+    "system": [{
+            "_comment": "Systemwide params",
+            "_comment_2": " use this data as to feed a metadata service (question from Henk J), investigate relationshiop with postman"
+        }, {
+            "page_limit": 1000
+        }, {
+            "page_size": 500
+        }],
+    "resources": [
+        {
+            "name": "ndvi_image",
+            "datasource": "Alterra Geodesk",
+            "type": "image",
+            "needsToken": false,
+            "coverageName": "MD_NDVI",
+            "output_format": "GeoTiff",
+            "queryParameters": [{
+                    "name": "fieldid",
+                    "type": "integer",
+                    "columnName": "fieldid"
+                }, {
+                    "name": "geometry",
+                    "type": "string"
+                }, {
+                    "name": "epsg",
+                    "type": "integer"
+                }, {
+                    "name": "date",
+                    "type": "date"
+                }, {
+                    "name": "output_epsg",
+                    "type": "integer"
+                }]
+        },     
+        {
+            "name": "ahn_image",
+            "datasource": "nationaalgeoregister",
+            "type": "image",
+            "needsToken": true,
+            "coverageName": "ahn2_5m",
+            "output_format": "GEOTIFF_FLOAT32",
+            "queryParameters": [{
+                    "name": "fieldid",
+                    "type": "integer",
+                    "columnName": "fieldid"
+                }, {
+                    "name": "geometry",
+                    "type": "string"
+                }, {
+                    "name": "epsg",
+                    "type": "integer"
+                }]
+        }, {
+            "name": "ahn",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "ahn2_5m",
+            "rasterColumn": "rast",
+            "needsToken": true,
+            "columns": "",
+            "queryParameters": [{
+                    "name": "fieldid",
+                    "type": "integer",
+                    "columnName": "fieldid",
+                    "resource": "fields"
+                }, {
+                    "name": "geometry",
+                    "type": "string"
+                }, {
+                    "name": "epsg",
+                    "type": "integer"
+                }]
+        }, {
+            "name": "fields",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "geometryColumn": "geom",
+            "requiresGeometry":true,
+            "columns": "year,grondgebruik,crop_code,crop_name,fieldid,area,perimeter",
+            "table": "gewaspercelen",
+            "needsToken": true,
+            "queryParameters": [{
+                    "name": "year",
+                    "type": "integer",
+                    "columnName": "year"
+                }, {
+                    "name": "cropname",
+                    "type": "string",
+                    "columnName": "crop_name"
+                }, {
+                    "name": "soilcode",
+                    "type": "string",
+                    "columnName": "soilcode",
+                    "resource": "soiltypes"
+                }, {
+                    "name": "soilname",
+                    "type": "string",
+                    "columnName": "soilname",
+                    "resource": "soiltypes"
+                }, {
+                    "name": "soiltype",
+                    "type": "string",
+                    "columnName": "soiltype",
+                    "resource": "soiltypes"
+                }, {
+                    "name": "cropcode",
+                    "type": "string",
+                    "columnName": "crop_code"
+                }, {
+                    "name": "fieldid",
+                    "type": "integer",
+                    "columnName": "fieldid"
+                }, {
+                    "name": "geometry",
+                    "type": "string"
+                }, {
+                    "name": "epsg",
+                    "type": "integer"
+                }, {
+                    "name": "output_epsg",
+                    "type": "integer"
+                }, {
+                    "name": "noclip",
+                    "type": "void"
+                }],
+            "noprint": "area"
+        },
+        {
+            "name": "soiltypes",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "bod50000",
+            "columns": "id",
+            "geometryColumn": "geom",
+            "needsToken": true,
+            "queryParameters": [{
+                    "name": "geometry",
+                    "type": "string"
+                }, {
+                    "name": "epsg",
+                    "type": "integer"
+                }, {
+                    "name": "fieldid",
+                    "type": "integer",
+                    "columnName": "fieldid",
+                    "resource": "fields"
+                }]
+        },
+        {
+            "name": "bodem50000_profielen_alg",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "bodem50000_profielen_alg",
+            "columns": "*",
+            "needsToken": true,
+            "_parent": "soiltypes",
+            "_linkColumns": "bodem_nr",
+            "queryParameters": [{
+                    "name": "bodem_nr",
+                    "type": "integer"
+                }]
+        }, {
+            "name": "bodem50000_profielen_laag",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "bodem50000_profielen_laag",
+            "columns": "*",
+            "needsToken": true,
+            "parent": "bodem50000_profielen_alg",
+            "queryParameters": [{
+                    "name": "bodem_nr",
+                    "type": "integer"
+                }, {
+                    "name": "gebruik",
+                    "type": "string"
+                }],
+            "linkColumns": "bodem_nr,gebruik"
+        },
+        {
+            "name": "ndvi",
+            "datasource": "postgresdatasource",
+            "columns": "ndvi_avg,ndvi_stddev,ndvi_avg,daynr,datum",
+            "type": "table",
+            "table": "gewaspercelen_ndvi",
+            "needsToken": true,
+            "queryParameters": [
+                {
+                    "name": "daynr",
+                    "type": "integer",
+                    "columnName": "daynr"
+                }, {
+                    "name": "fromdate",
+                    "type": "partialdate",
+                    "columnName": "datum"
+                }, {
+                    "name": "todate",
+                    "type": "partialdate",
+                    "columnName": "datum"
+                }, {
+                    "name": "fieldid",
+                    "type": "integer",
+                    "columnName": "fieldid",
+                    "resource_": "fields"
+                }, {
+                    "name": "geometry",
+                    "type": "string",
+                    "columnName": "geom",
+                    "resource": "fields",
+                    "joinColumn": "fieldid"
+                }, {
+                    "name": "epsg",
+                    "type": "integer"
+                }]
+        }, {
+            "name": "gewaspercelen_meteostation",
+            "columns": "fieldid",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "gewaspercelen_meteostation",
+            "needsToken": true
+        },
+        {
+            "name": "meteodata",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "knmi_meteo_values",
+            "columns": "*",
+            "needsToken": true,
+            "queryParameters": [{
+                    "name": "stationid",
+                    "type": "integer",
+                    "columnName": "meteostationid"
+                }, {
+                    "name": "meteostationid",
+                    "type": "integer",
+                    "columnName": "meteostationid"
+                }, {
+                    "name": "meteostation",
+                    "type": "integer",
+                    "columnName": "meteostationid"
+                }, {
+                    "name": "date",
+                    "type": "date",
+                    "columnName": "datum"
+                }, {
+                    "name": "fromdate",
+                    "type": "partialdate",
+                    "columnName": "datum"
+                }, {
+                    "name": "todate",
+                    "type": "partialdate",
+                    "columnName": "datum"
+                }, {
+                    "name": "output_epsg",
+                    "type": "integer"
+                }, {
+                    "name": "output_format",
+                    "type": "string"
+                }, {
+                    "name": "fieldid",
+                    "type": "integer",
+                    "columnName": "fieldid",
+                    "resource": "gewaspercelen_meteostation"
+                }]
+            ,
+            "orderBy": "meteostationid,datum"
+        }      
+        ,
+        {
+            "name": "meteostations",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "knmi_meteo_station",
+            "geometryColumn": "geom",
+            "columns": "meteostationid,name,wmocode,lon,lat,alt,source,provider",
+            "needsToken": true,
+            "queryParameters": [{
+                    "name": "stationid",
+                    "type": "integer",
+                    "columnName": "meteostationid"
+                }, {
+                    "name": "meteostationid",
+                    "type": "integer",
+                    "columnName": "meteostationid"
+                }, {
+                    "name": "output_epsg",
+                    "type": "integer"
+                }, {
+                    "name": "fieldid",
+                    "type": "integer",
+                    "columnName": "fieldid",
+                    "resource": "gewaspercelen_meteostation",
+                    "joinColumn": "meteostationid",
+                    "extraColumns": "fieldid,rank,distance"
+                }]            
+        }   
+        ,        
+        {
+            "name": "municipalities",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "gemeente_2015",
+            "geometryColumn": "geom",
+            "columns": "id, name",
+            "needsToken": true,
+            "queryParameters": [{
+                    "name": "output_epsg",
+                    "type": "integer"
+                }]
+        }  
+        ,
+        {
+            "name": "provences",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "provincie_2015",
+            "geometryColumn": "geom",
+            "columns": "id, name",
+            "needsToken": true,
+            "queryParameters": [{
+                    "name": "output_epsg",
+                    "type": "integer"
+                }]
+        }  
+        ,
+        {
+            "name": "postalcodes",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "pc6_2016",
+            "geometryColumn": "geom",
+            "columns": "id, postcode",
+            "needsToken": true,
+            "queryParameters": [{
+                    "name": "output_epsg",
+                    "type": "integer"
+                }]
+        }  
+        ,
+        {
+            "name": "cropcodes",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "cropinformation",
+            "columns": "*",
+            "needsToken": false,
+            "queryParameters": [{
+                    "name": "cropcode",
+                    "type": "string",
+                    "columnName": "cropcode"
+                }]
+        },
+        {
+            "name": "soilcodes",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "soilinformation",
+            "columns": "*",
+            "needsToken": false,
+            "queryParameters": [{
+                    "name": "soilcode",
+                    "type": "string",
+                    "columnName": "soilcode"
+                }]
+        },
+        {
+            "name": "bww-greppels",
+            "datasource": "bww-postgresdatasource",
+            "type": "query",
+            "query": "with foo as (select st_buffer(st_geomfromewkt(?),5) as geom) select ogc_fid ,lokaalid ,breedteklasse,typewater, st_length(st_intersection(foo.geom, w.geometrie_lijn)) as grens_lengte , st_asewkt(st_transform(geometrie_lijn,4326)) as geom from foo , waterdeel w where w.tdncode =600 and st_intersects(foo.geom, w.geometrie_lijn)",
+            "needsToken": true,
+            "queryParameters": [
+                {
+                    "name": "geom",
+                    "type": "string"
+                }, {
+                    "name": "epsg",
+                    "type": "integer"
+                }]
+        },        
+        {
+            "_comment": "Liever via /fields/.../ndvi_image",
+            "name": "groenmonitor-ndvi",
+            "datasource": "postgresdatasource",
+            "type": "query",
+            "query": "select datum, ndvi_avg, ndvi_stddev  from gewaspercelen_ndvi t1 , gewaspercelen t2 , (select st_geomfromewkt(?) geom ) as t3 where t1.fieldid=t2.fieldid and st_intersects(t3.geom,t2.geom) and not st_touches(t3.geom,t2.geom)",                     
+            "needsToken": true,
+            "queryParameters": [
+                {
+                    "name": "geom",
+                    "type": "string"
+                }, {
+                    "name": "epsg",
+                    "type": "integer"
+                }, {
+                    "name": "date",
+                    "type": "date",
+                    "columnName": "datum"
+                }, {
+                    "name": "fromdate",
+                    "type": "partialdate",
+                    "columnName": "datum"
+                }, {
+                    "name": "todate",
+                    "type": "partialdate",
+                    "columnName": "datum"
+                }]
+        },        
+        {
+            "name": "meteostations-field",
+            "datasource": "postgresdatasource",
+            "type": "query",
+            "query": "select t1.meteostationid,name,wmocode,lon,lat,alt,source,provider, t2.rank, t2.distance, t2.fieldid from knmi_meteo_station t1, gewaspercelen_meteostation t2 where t1.meteostationid=t2.meteostationid ",                     
+            "orderBy": "rank ",
+            "needsToken": true,
+            "geometryColumn": "geom",
+            "queryParameters": [
+                {
+                    "name": "fieldid",
+                    "type": "integer",
+                    "columnName": "fieldid"
+                }]
+        },
+        {
+            "_comment": "Used internally only to retrieve soilunits for area",
+            "name": "soilunits",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "bod50000_eenheden",
+            "columns": "*",
+            "needsToken": true,
+            "parent": "soiltypes",
+            "linkColumns": "id",
+            "queryParameters": []
+        }
+        ,
+        {
+            "name": "soilparams",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "bofek2012_profiles",
+            "columns": "*",
+            "needsToken": true,
+            "queryParameters": [{
+                    "name": "soilparamid",
+                    "type": "integer",
+                    "columnName": "bofek2012"
+                }]
+        },
+        {
+            "name": "bofek2012_layers",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "bofek2012_layers",
+            "columns": "laag_nr,hor_code,diepte_b,diepte_o,orgstof,orgstof_p10,orgstof_p90,lutum,lutum_p10,lutum_p90,silt,leem,leem_p10,leem_p90,m50,m50_p10,m50_p90,ph_kcl,ph_p10,ph_p90,cac03,a_waarde,materiaal",
+            "needsToken": true,
+            "parent": "soilparams",
+            "linkColumns": "bofek2012,soil_nr,landuse",
+            "queryParameters": []
+        }
+    ]
+    , 
+    "datasources": [
+        {
+            "type": "postgres",
+            "name": "postgresdatasource",
+            "file": "../agrodatacube_v2.properties",
+            "containsregistrationdata": true
+        },
+        {
+            "type": "postgres",
+            "name": "bww-postgresdatasource",
+            "file": "../agrodatacube_v2.properties"
+        },
+        {
+            "type": "wcs",
+            "name": "nationaalgeoregister",
+            "url": "https://geodata.nationaalgeoregister.nl/ahn2/wcs?request=GetCoverage&service=wcs&version=1.0.0&RESX=5&RESY=5&format=GEOTIFF_FLOAT32",
+            "version": "1.0.0"
+        },
+        {
+            "type": "wcs",
+            "name": "Alterra Geodesk",
+            "url": "http://scomp1250:6080/arcgis/services/SPOT/Spot_NDVI/ImageServer/WCSServer?Service=WCS&Version=1.0.0&Request=GetCoverage&RESX=10&RESY=10",
+            "version": "1.0.0",
+			"_comment":"Only accessible from within WUR"
+        }
+    ]
+}

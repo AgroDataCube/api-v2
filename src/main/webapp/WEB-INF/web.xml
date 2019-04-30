@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app id="WebApp_ID" version="2.4" xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee   http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
+    <display-name>Restful Web Application</display-name>
+   
+    <servlet-mapping>
+        <servlet-name>jersey-servlet</servlet-name>
+        <url-pattern>/v2/rest/*</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>jersey-servlet</servlet-name>
+        <servlet-class>com.sun.jersey.spi.container.servlet.ServletContainer</servlet-class>
+<!--        <init-param>
+            <param-name>com.sun.jersey.config.property.packages</param-name>
+            <param-value>
+                nl.wur.agrodatacube.servlet,io.swagger.jaxrs.json,io.swagger.jaxrs.listing                                
+            </param-value>
+        </init-param>-->
+        <init-param>
+            <param-name>com.sun.jersey.config.property.packages</param-name>
+            <param-value>
+                nl.wur.agrodatacube.servlet                               
+            </param-value>
+        </init-param>
+        <init-param>
+        <param-name>com.sun.jersey.spi.container.ContainerResponseFilters</param-name>
+        <param-value>nl.wur.agrodatacube.servlet.filter.CorsFilter</param-value>
+    </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    
+<!--    <servlet>
+        <servlet-name>registrationservlet</servlet-name>
+        <servlet-class>agrodatacube.wur.nl.registration.RegistrationServlet</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>registrationservlet</servlet-name>
+        <url-pattern>/api/registrationservlet</url-pattern>
+    </servlet-mapping>-->
+
+    <welcome-file-list>
+        <welcome-file>index.jsp</welcome-file>
+    </welcome-file-list>
+
+   
+<!--    <servlet>
+        <servlet-name>Jersey2Config</servlet-name>
+        <servlet-class>io.swagger.jaxrs.config.DefaultJaxrsConfig</servlet-class>
+        <init-param>
+            <param-name>api.version</param-name>
+            <param-value>2.0.0</param-value>
+        </init-param>
+        <init-param>
+            <param-name>swagger.api.basepath</param-name>
+            <param-value>https://agrodatacube.wur.nl/api/v2/rest/</param-value>
+            <param-value>http://localhost:8084/api/v1/rest/</param-value>
+        </init-param>
+        <init-param>
+            <param-name>swagger.api.title</param-name>
+            <param-value>API Agrodatacube</param-value>
+        </init-param>
+        <init-param>
+            <param-name>swagger.api.schemes</param-name>
+            <param-value>http,https</param-value>
+        </init-param>
+        <init-param>
+            <param-name>swagger.api.scheme</param-name>
+            <param-value>http,https</param-value>
+        </init-param>
+        <load-on-startup>2</load-on-startup>
+    </servlet>-->
+</web-app>
