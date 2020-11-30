@@ -4,11 +4,12 @@
     <groupId>agrodatacube.wur.nl</groupId>
     <artifactId>AgroDataCubeWeb</artifactId>
     <packaging>war</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>2.0-SNAPSHOT</version>
     <name>AgroDataCubeWeb</name>
     <url>http://maven.apache.org</url>
     <properties>
         <geotools.version>20-RC</geotools.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
     <repositories>
         <repository>
@@ -56,12 +57,17 @@
             <version>2.4</version>
             <scope>provided</scope>
         </dependency>
-
-        <dependency>
+         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>9.2-1003-jdbc4</version>
-        </dependency>   
+        </dependency>  
+       <dependency>
+            <groupId>com.oracle</groupId>
+            <artifactId>ojdbc8</artifactId>
+            <version>12.2.0.1</version>
+            <type>jar</type>
+        </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
@@ -73,12 +79,6 @@
             <artifactId>java-jwt</artifactId>
             <version>3.3.0</version>
         </dependency>
-<!--        <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-jaxrs</artifactId>
-            <version>1.5.0</version>
-            <type>jar</type>
-        </dependency>-->
         <dependency>
             <groupId>javax.mail</groupId>
             <artifactId>mail</artifactId>
@@ -113,12 +113,12 @@
             <artifactId>gt-epsg-extension</artifactId>
             <version>${geotools.version}</version>
         </dependency>
-        <!--        <dependency>
-            <groupId>agrodatacube.wur.nl</groupId>
-            <artifactId>AgroDataCubeWeb</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <type>war</type>
-        </dependency>-->
+        <!-- https://mvnrepository.com/artifact/com.googlecode.json-simple/json-simple -->
+        <dependency>
+            <groupId>com.googlecode.json-simple</groupId>
+            <artifactId>json-simple</artifactId>
+            <version>1.1.1</version>
+        </dependency>
     </dependencies>
 
     <build>

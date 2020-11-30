@@ -131,7 +131,8 @@ public class ReProjector {
         //
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         GeoTiffWriter writer = new GeoTiffWriter(outputStream);
-        writer.write(newRaster, new GeneralParameterValue[0]);
+        writer.write(newRaster, new GeneralParameterValue[0]);     
+        writer.dispose();
         return outputStream.toByteArray();
     }
 

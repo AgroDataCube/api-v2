@@ -7,43 +7,44 @@
  * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied.
  */
-package nl.wur.agrodatacube.datasource.postgres;
+package nl.wur.agrodatacube.datasource.oracle;
 
 import nl.wur.agrodatacube.datasource.AdapterDataSource;
 import nl.wur.agrodatacube.datasource.metadata.ColumnMetadata;
 import nl.wur.agrodatacube.exec.ExecutorTask;
 import nl.wur.agrodatacube.properties.AgroDataCubeProperties;
-import nl.wur.agrodatacube.resource.AdapterPostgresResource;
+//import nl.wur.agrodatacube.resource.AdapterPostgresResource;
 import nl.wur.agrodatacube.result.AdapterResult;
 import nl.wur.agrodatacube.result.AdapterTableResult;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import nl.wur.agrodatacube.resource.AdapterTableResource;
 
 /**
  *
  * @author Yke
  */
-public class PostgresAdapterDataSource extends AdapterDataSource {
+public class OracleAdapterDataSource extends AdapterDataSource {
 
-    private AgroDataCubePostgresPool pool = null;
+    private AgroDataCubeOraclePool pool = null;
 
-    public PostgresAdapterDataSource() {
-        pool = new AgroDataCubePostgresPool();
+    public OracleAdapterDataSource() {
+        pool = new AgroDataCubeOraclePool();
     }
 
     public AdapterTableResult executeQuery(String query, ArrayList<Object> paramValues) {
-        return executeQuery(new PostgresQuery(query, paramValues));
+        return executeQuery(new OracleQuery(query, paramValues));
     }
 
     /**
      *
-     * @param postgresQuery
+     * @param oracleQuery
      * @param params
      * @return
      */
-    public AdapterTableResult executeQuery(PostgresQuery postgresQuery) {
+    public AdapterTableResult executeQuery(OracleQuery oracleQuery) {
 
         Connection connection = null;
         AdapterTableResult result;
@@ -52,17 +53,18 @@ public class PostgresAdapterDataSource extends AdapterDataSource {
 
         try {
             connection = getConnection();
-            ps = connection.prepareStatement(postgresQuery.getQuery(), ResultSet.FETCH_FORWARD, ResultSet.CONCUR_READ_ONLY);
+            connection.setReadOnly(true);
+            ps = connection.prepareStatement(oracleQuery.getQuery());//, ResultSet.FETCH_FORWARD, ResultSet.CONCUR_READ_ONLY);
             ps.setFetchSize(1000);
-            for (int i = 0; i < postgresQuery.getParamValues().size(); i++) {
-                ps.setObject(i + 1, postgresQuery.getParamValues().get(i));
+            for (int i = 0; i < oracleQuery.getParamValues().size(); i++) {
+                ps.setObject(i + 1, oracleQuery.getParamValues().get(i));
             }
 
             result = new AdapterTableResult();
-            result.setQueryString(postgresQuery.getQuery());
+            result.setQueryString(oracleQuery.getQuery());
             rs = ps.executeQuery();
             int nrOfQueryColumns = rs.getMetaData().getColumnCount();
-            int nrOfTableColumns = nrOfQueryColumns + postgresQuery.getChildren().size();
+            int nrOfTableColumns = nrOfQueryColumns + oracleQuery.getChildren().size();
             result.setColumnCount(nrOfTableColumns);
 
             String[] columnNames = new String[nrOfQueryColumns];
@@ -78,8 +80,8 @@ public class PostgresAdapterDataSource extends AdapterDataSource {
             //
             // Create extra columns for childqueries.
             //
-            for (int j = 0; j < postgresQuery.getChildren().size(); j++) {
-                result.setColumnName(j + nrOfQueryColumns, postgresQuery.getChildren().get(j).getName());
+            for (int j = 0; j < oracleQuery.getChildren().size(); j++) {
+                result.setColumnName(j + nrOfQueryColumns, oracleQuery.getChildren().get(j).getName());
             }
 
             //
@@ -92,9 +94,9 @@ public class PostgresAdapterDataSource extends AdapterDataSource {
                 }
                 // Add dummy results for childqueries
 
-                for (int j = 0; j < postgresQuery.getChildren().size(); j++) {
-                    PostgresQuery child = postgresQuery.getChildren().get(j);
-                    AdapterPostgresResource resource = (AdapterPostgresResource) child.getResource();
+                for (int j = 0; j < oracleQuery.getChildren().size(); j++) {
+                    OracleQuery child = oracleQuery.getChildren().get(j);
+                    AdapterTableResource resource = (AdapterTableResource) child.getResource();
                     String[] linkColumns = resource.getLinkColumns();
                     child.clearParameterValues();
                     for (int l = 0; l < linkColumns.length; l++) {
@@ -111,15 +113,15 @@ public class PostgresAdapterDataSource extends AdapterDataSource {
             }
             rs.close();
             rs = null;
-            ps.getConnection().close();
+            connection.close();
             ps.close();
             ps = null;
             //result.setColumnCount(rs.getMetaData().get);
             //result = AdapterTableResult.fromSQLResulSet(, postgresQuery);
-            result.setQueryString(postgresQuery.getQuery());
+            result.setQueryString(oracleQuery.getQuery());
         } catch (Exception e) {
             try {
-                ps.getConnection().close();
+                connection.close();
             } catch (Exception q) {
                 ;
             }
@@ -130,11 +132,11 @@ public class PostgresAdapterDataSource extends AdapterDataSource {
             }
             result = new AdapterTableResult();
             result.setStatus(e.getMessage()); //Jsonizer.tojson
-            result.setQueryString(postgresQuery.getQuery());
+            result.setQueryString(oracleQuery.getQuery());
         } finally {
             try {
                 if (ps != null) {
-                    ps.getConnection().close();
+                    connection.close();
                 }
             } catch (Exception q) {;
             }
@@ -185,7 +187,7 @@ public class PostgresAdapterDataSource extends AdapterDataSource {
                 throw new RuntimeException("predefined query\"" + name.toLowerCase() + "\" not found in config tabel");
             }
         } catch (Exception e) {
-            throw new RuntimeException("PostgresAdapterDataSource.getPredefinedQuery : " + e.getMessage());
+            throw new RuntimeException("OracleAdapterDataSource.getPredefinedQuery : " + e.getMessage());
         } finally {
             try {
                 connection.close();
@@ -228,8 +230,8 @@ public class PostgresAdapterDataSource extends AdapterDataSource {
         //
         // Now build the query since that is complex we use a queryBuilder.
         //
-        PostgresQueryBuilder qb = new PostgresQueryBuilder();
-        PostgresQuery q = qb.buildQuery(task);
+        OracleQueryBuilder qb = new OracleQueryBuilder();
+        OracleQuery q = qb.buildQuery(task);
 
         return executeQuery(q);
     }
@@ -275,10 +277,7 @@ public class PostgresAdapterDataSource extends AdapterDataSource {
      * @param filename
      */
     public void addDataFromFile(String filename) {
-        
-        //
-        // todo check if there are properties for getname().
-        //
+
         setUsername(AgroDataCubeProperties.getValue(getName().concat(".").concat("username")));
         setPassword(AgroDataCubeProperties.getValue(getName().concat(".").concat("password")));
         setHost(AgroDataCubeProperties.getValue(getName().concat(".").concat("host")));

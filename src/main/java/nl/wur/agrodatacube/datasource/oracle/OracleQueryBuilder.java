@@ -7,7 +7,7 @@
  * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied.
  */
-package nl.wur.agrodatacube.datasource.postgres;
+package nl.wur.agrodatacube.datasource.oracle;
 
 import java.security.InvalidParameterException;
 import nl.wur.agrodatacube.exec.ExecutorTask;
@@ -25,13 +25,13 @@ import nl.wur.agrodatacube.resource.query.ConfigurationParameter;
 import nl.wur.agrodatacube.servlet.WorkerParameter;
 
 /**
- * This class builds SQL statements for Postgres databases. we probably need a
+ * This class builds SQL statements for Oracle databases. We  need a
  * variant for each database due to differences in date functions, spatial
  * functions etc.
  *
  * @author rande001
  */
-public class PostgresQueryBuilder {
+public class OracleQueryBuilder {
 
     /**
      * The task contains all the information we have to determine what needs to
@@ -40,7 +40,7 @@ public class PostgresQueryBuilder {
      * @param task
      * @return
      */
-    public PostgresQuery buildQuery(ExecutorTask task) {
+    public OracleQuery buildQuery(ExecutorTask task) {
         //
         // if this is a queryResource it contains the query so we can return that after including all supplied parameters.
         //
@@ -66,9 +66,9 @@ public class PostgresQueryBuilder {
      * @param task
      * @return
      */
-    private PostgresQuery buildQueryForQueryResource(ExecutorTask task) {
+    private OracleQuery buildQueryForQueryResource(ExecutorTask task) {
         AdapterQueryResource resource = (AdapterQueryResource) task.getResource();
-        PostgresQuery result = new PostgresQuery(resource);
+        OracleQuery result = new OracleQuery(resource);
 
         //
         // Get the inital part of the query
@@ -77,7 +77,7 @@ public class PostgresQueryBuilder {
         String where = " where ";
 
         //        
-        // Base query is , separated. Check for geom element and if present replace by st_asgeojson, transform and nr of decs dependant on output_epsg
+        // Base query is , separated. Check for geom element and if present replace by SDO_UTIL.TO_GEOJSON , transform and nr of decs dependant on output_epsg
         //
         String geom = "";
         if (resource.getGeometryColumn() != null) {
@@ -87,9 +87,9 @@ public class PostgresQueryBuilder {
                 if (!"28992".equalsIgnoreCase(outputEpsg)) {
                     ndec = 6;
                 }
-                geom = "st_asgeojson(st_transform(".concat(resource.getGeometryColumn()).concat(",").concat(outputEpsg).concat("),").concat("" + ndec).concat(") as geom,");
+                geom = "SDO_UTIL.TO_GEOJSON (st_transform(".concat(resource.getGeometryColumn()).concat(",").concat(outputEpsg).concat("),").concat("" + ndec).concat(") as geom,");
             } else {
-                geom = "st_asgeojson(".concat(resource.getGeometryColumn()).concat(",").concat("" + ndec).concat(") as geom,");
+                geom = "SDO_UTIL.TO_GEOJSON (".concat(resource.getGeometryColumn()).concat(",").concat("" + ndec).concat(") as geom,");
             }
             query = query.replaceFirst("select", "select ".concat(geom));
         }
@@ -114,6 +114,7 @@ public class PostgresQueryBuilder {
             where = " and ";
         }
         result.setQuery(query);
+        // query = query.concat(where).concat(" rownum < 10");
 
         //
         // Somehow include order by. Ignore if count is requested.
@@ -141,27 +142,27 @@ public class PostgresQueryBuilder {
             //
             int page_size = AgroDataCubeProperties.getDefaultPageSize();
 
-            if (task.getResultParameterValue("page_size") != null) {
-                int user_page_size = Integer.parseInt(task.getResultParameterValue("page_size"));
-                if (user_page_size > page_size) {
-                    throw new InvalidParameterException(String.format("Value %d for page__size exceeds limit %d", user_page_size, page_size));
-                }
-                page_size=user_page_size;
-                result.setQuery(result.getQuery().concat(" limit ").concat(task.getResultParameterValue("page_size")));
-            }
-            if (task.getResultParameterValue("page_offset") != null) {
-                //
-                // Off set is in pages here but postgres needs row number. First row = 0. page_offset 1 => first page so row 0
-                //
-                int offset = (Integer.parseInt(task.getResultParameterValue("page_offset")));
-                if (offset < 0) {
-                    offset = 0;
-                }
-                offset *= page_size;
-                result.setQuery(result.getQuery().concat(" offset ").concat("" + offset));
-            }
+//            if (task.getResultParameterValue("page_size") != null) {
+//                int user_page_size = Integer.parseInt(task.getResultParameterValue("page_size"));
+//                if (user_page_size > page_size) {
+//                    throw new InvalidParameterException(String.format("Value %d for page__size exceeds limit %d", user_page_size, page_size));
+//                }
+//                result.setQuery(result.getQuery().concat(" limit ").concat(task.getResultParameterValue("page_size")));
+//            }
+//            if (task.getResultParameterValue("page_offset") != null) {
+//                //
+//                // Off set is in pages here but postgres needs row number. First row = 0. page_offset 1 => first page so row 0
+//                //
+//                int offset = (Integer.parseInt(task.getResultParameterValue("page_offset")));
+//                if (offset < 0) {
+//                    offset = 0;
+//                }
+//                offset *= page_size;
+//                result.setQuery(result.getQuery().concat(" offset ").concat("" + offset));
+//            }
         }
-        //result.setQuery(query);
+        
+        result.setQuery(query);
         // System.out.println("Constructed query :" + result.getQuery());
         return result;
     }
@@ -174,8 +175,8 @@ public class PostgresQueryBuilder {
      * @param resource
      * @return
      */
-    private PostgresQuery buildQueryForChildTableResource(AdapterPostgresResource resource) {
-        PostgresQuery result = new PostgresQuery(resource);
+    private OracleQuery buildQueryForChildTableResource(AdapterPostgresResource resource) {
+        OracleQuery result = new OracleQuery(resource);
 
         //
         // It will be a simple strait forward query, no complexity.
@@ -260,12 +261,14 @@ public class PostgresQueryBuilder {
      *    - user supplied a field -> extra from gewaspercelen and join on joincolumn
      *    - user supplied (also) non spatial properties
      *
+     *  Bases on Postgres implementation so adaptations needed.
+     * 
      * </PRE>
      *
      * @param task
      * @return
      */
-    private PostgresQuery buildQueryForTableResource(ExecutorTask task) {
+    private OracleQuery buildQueryForTableResource(ExecutorTask task) {
 
         java.util.Properties selectClause = new java.util.Properties(); // name -> query expression
         ArrayList<String> fromClause = new ArrayList<>();
@@ -274,7 +277,7 @@ public class PostgresQueryBuilder {
         int geomResourceFilterIndex = 0; // Only used if geometry is supplied in the query parameters
         int filterResourceIndex = 0; // Only used if one the query parameters is not available in the base table
 
-        PostgresQuery result = new PostgresQuery(task.getResource());
+        OracleQuery result = new OracleQuery(task.getResource());
         String output_epsg = null;
         if (task.getResultParameterValue("output_epsg") != null) {
             output_epsg = task.getResultParameterValue("output_epsg");
@@ -295,83 +298,64 @@ public class PostgresQueryBuilder {
         String epsgValue = task.getQueryParameterValue("epsg");
 
         if (resource.isRasterResource()) {
-            //
-            // st_summary returns a record for each matching tile and we need to query that in a subquery to be able to access the elements of the record.
-            // So we build a subquery that does all the work and then select min,max,avg etc from that.
-            //
+            throw new RuntimeException("Support for ORACLE rasters is not yet implemented");
+        } 
+//       else 
 
-            //
-            // If we have a geometry then the from looks like 
-            //
-            if (geomValue != null) {
-                if (epsgValue != null) {
-                    result.addParamValues("SRID=" + task.getQueryParameterValue("epsg", null) + ";" + geomValue); // todo st_transform
-                    fromClause.add("( SELECT (ST_SummaryStats(ST_Clip(r.rast,foo.geom))).*, foo.geom geom\n"
-                            + "           FROM " + resource.getTableName() + " r\n"
-                            + "              , (select st_transform(st_geomfromewkt(?),28992) as geom) as foo\n"
-                            + "          WHERE st_intersects(r.rast, foo.geom)) "); // as d
-                } else {
-                    result.addParamValues("SRID=28992;" + geomValue.toUpperCase());
-                    fromClause.add("( SELECT (ST_SummaryStats(ST_Clip(r.rast,foo.geom))).*, foo.geom geom\n"
-                            + "           FROM " + resource.getTableName() + " r\n"
-                            + "              , (select st_geomfromewkt(?) as geom) as foo\n"
-                            + "          WHERE st_intersects(r.rast, foo.geom)) "); // as d
-                }
-                task.removeQueryParameter("epsg"); // It is already used.
-                task.removeQueryParameter("geometry"); // It is already used.
 
-            } else if (task.getQueryParameterValue("fieldid") != null) {
-                fromClause.add("( SELECT (ST_SummaryStats(ST_Clip(r.rast,foo.geom))).*, foo.geom geom\n"
-                        + "           FROM " + resource.getTableName() + " r\n"
-                        + "              , (select geom from gewaspercelen where fieldid=" + task.getQueryParameterValue("fieldid") + ") as foo\n"
-                        + "          WHERE st_intersects(r.rast, foo.geom))  "); // as d
-                task.removeQueryParameter("fieldid"); // It is already used.
-            }
-            selectClause.put("area", "max(st_area(geom))");
-            selectClause.put("mean", String.format("round((sum(t%d.count*t%d.mean)/sum(t%d.count))::numeric,3) ", fromClause.size(), fromClause.size(), fromClause.size()));
-            selectClause.put("min", String.format(" min( t%d.min)", fromClause.size()));
-            selectClause.put("max", String.format("max(  t%d.max)", fromClause.size()));
-            orderClause.clear();
-            orderClause.add("1");
-        } else if (task.getQueryParameterValue("geometry") != null) {
+//BISUSER >select t1.PLAATS as PLAATS    , t1.GVG as GVG
+//  2    from pfb_alg  t1
+//  3       ,  (select st_geometry.st_geomfromtext('POINT(100000 400000)',28992) geom from dual)   t2
+//  4   where  t2.geom.st_intersects(st_geometry(t1.shape)) = 1
+//  5     and  t2.geom.st_touches(st_geometry(t1.shape)) =0;
+// where  t2.geom.st_intersects(st_geometry(t1.shape)) = 1
+
+// Via sdo_geometry
+
+//select sdo_geom.sdo_length(SDO_GEOM.SDO_INTERSECTION(t1.shape, t2.geom,0.001),0.001) as perimeter 
+//     , sdo_geom.sdo_area(SDO_GEOM.SDO_INTERSECTION(t1.shape, t2.geom,0.001),0.001) as area  
+//  from (select sdo_geometry('POLYGON((168375 469700, 168375 473700, 172375 473700, 172375 469700, 168375 469700))',null) geom from dual)  t2 
+//     , pfb_alg t1
+// where sdo_RELATE(t1.shape, t2.geom,'mask=anyinteract') = 'TRUE'
+
+        if (task.getQueryParameterValue("geometry") != null) {
             fromClause.add(resource.getTableName());
             if (resource.isGeometryResource()) {
                 if (epsgValue != null) {
-                    fromClause.add(" (select st_transform(st_geomfromewkt(?),28992) geom) ");
-                    result.addParamValues("SRID=" + task.getQueryParameterValue("epsg", null) + ";" + geomValue);
+                    // fromClause.add(" (select st_transform(st_geomfromewkt(?),28992) geom) ");
+                    fromClause.add(" (select sdo_geometry(?,?) geom from dual) ");
+                    result.addParamValues(geomValue);
+                    result.addParamValues(epsgValue);
                 } else {
-                    fromClause.add(" (select st_geomfromewkt(?) geom) ");
-                    result.addParamValues("SRID=28992;" + geomValue);
+                    fromClause.add(" (select sdo_geometry(?,null) geom from dual) ");
+                    result.addParamValues(geomValue);
+                    //result.addParamValues(null); // TODO epsgValue
                 }
-                // 17 sep 2020
-                task.removeQueryParameter("epsg");
-                task.removeQueryParameter("geometry");
-                whereClause.add(String.format(" st_intersects(t1.geom,t2.geom)", geomResourceFilterIndex));
-                whereClause.add(String.format(" not st_touches(t1.geom,t2.geom)", geomResourceFilterIndex));
+                whereClause.add(String.format(" sdo_relate(t1.shape, t2.geom,'mask=anyinteract')='TRUE'", geomResourceFilterIndex));
                 if (task.getQueryParameterValue("noclip") == null) {
-                    selectClause.put("area", "st_area(st_intersection(t1.geom,t2.geom))");
-                    selectClause.put("perimeter", "st_perimeter(st_intersection(t1.geom,t2.geom))");
+                    selectClause.put("area", "sdo_geom.sdo_area(SDO_GEOM.SDO_INTERSECTION(t1.shape, t2.geom,0.001),0.001)");// get_sdo_geom
+                    selectClause.put("perimeter", "sdo_geom.sdo_length(SDO_GEOM.SDO_INTERSECTION(t1.shape, t2.geom,0.001),0.001)");
                 } else {
-                    selectClause.put("area", "st_area(t1.geom)");
-                    selectClause.put("perimeter", "st_perimeter(t1.geom)");
+                    selectClause.put("area", "sdo_geom.sdo_area(t1.shape,0.001)");
+                    selectClause.put("perimeter", "sdo_geom.sdo_length(t1.shape,0.001)");
                 }
-                if (!task.returnNoGeom()) {
-                    if (output_epsg != null) {
-                        if (task.getQueryParameterValue("noclip") == null) {
-                            selectClause.put("geom", "st_asgeojson(st_transform(st_intersection(t1.geom,t2.geom)," + output_epsg + "),6) ");
-                        } else {
-                            selectClause.put("geom", "st_asgeojson(st_transform(t1.geom," + output_epsg + "),6) ");
-                        }
-                    } else {
-                        if (task.getQueryParameterValue("noclip") == null) {
-                            selectClause.put("geom", "st_asgeojson(st_intersection(t1.geom,t2.geom),3)");
-                        } else {
-                            selectClause.put("geom", "st_asgeojson(t1.geom,3)");
-                        }
-                    }
-                }
-                orderClause.clear();
-                orderClause.add("area desc");
+//                if (!task.returnNoGeom()) {
+//                    if (output_epsg != null) {
+//                        if (task.getQueryParameterValue("noclip") == null) {
+//                            selectClause.put("geom", "(st_transform(st_intersection(t1.geom,t2.geom)," + output_epsg + "),6) ");
+//                        } else {
+//                            selectClause.put("geom", "(st_transform(t1.geom," + output_epsg + "),6) ");
+//                        }
+//                    } else {
+//                        if (task.getQueryParameterValue("noclip") == null) {
+//                            selectClause.put("geom", "SDO_UTIL.TO_GEOJSON (st_intersection(t1.geom,t2.geom),3)");
+//                        } else {
+//                            selectClause.put("geom", "SDO_UTIL.TO_GEOJSON (t1.geom,3)");
+//                        }
+//                    }
+//                }
+//                orderClause.clear();
+//                orderClause.add("area desc");
             } else {
                 // 
                 // because we are here, a geometry is valid so we have to be able to process this.
@@ -398,13 +382,13 @@ public class PostgresQueryBuilder {
             fromClause.add(resource.getTableName());
 
             if (resource.getGeometryColumn() != null) {
-                selectClause.put("area", "st_area(t1.geom)");
-                selectClause.put("perimeter", "st_perimeter(t1.geom)");
+                selectClause.put("area", "sdo_geom.sdo_area(t1.shape,0.001)");
+                selectClause.put("perimeter", "sdo_geom.sdo_length(t1.shape,0.001)");
                 if (!task.returnNoGeom()) {
                     if (output_epsg != null) {
-                        selectClause.put("geom", "st_asgeojson(st_transform(t1.geom," + output_epsg + "),6) ");
+                        selectClause.put("geom", "SDO_UTIL.TO_GEOJSON (st_transform(t1.geom," + output_epsg + "),6) ");
                     } else {
-                        selectClause.put("geom", "st_asgeojson(t1.geom,3)");
+                        selectClause.put("geom", "' {\"type\": \"Point\",\"coordinates\": ['||x||','||y||']}'"); // SDO_UTIL.TO_GEOJSON nog niet in deze versie, specifiek voor pfb_alg
                     }
                 }
                 if (orderClause.isEmpty()) {
@@ -450,22 +434,22 @@ public class PostgresQueryBuilder {
                         if (!task.returnNoGeom()) {
                             if (output_epsg == null) {
                                 if (task.getQueryParameterValue("noclip") == null) {
-                                    selectClause.put("geom", String.format("st_asgeojson(st_intersection(t1.geom,t%d.geom),3) ", filterResourceIndex)); //todo output epsg
+                                    selectClause.put("geom", String.format("SDO_UTIL.TO_GEOJSON (st_intersection(t1.geom,t%d.geom),3) ", filterResourceIndex)); //todo output epsg
                                 } else {
-                                    selectClause.put("geom", String.format("st_asgeojson(t1.geom,3) ")); //todo output epsg
+                                    selectClause.put("geom", String.format("SDO_UTIL.TO_GEOJSON (t1.geom,3) ")); //todo output epsg
                                 }
                             } else {
                                 if (task.getQueryParameterValue("noclip") == null) {
-                                    selectClause.put("geom", String.format("st_asgeojson(st_transform(st_intersection(t1.geom,t%d.geom)," + output_epsg + "),6) ", filterResourceIndex)); //todo output epsg
+                                    selectClause.put("geom", String.format("SDO_UTIL.TO_GEOJSON (st_transform(st_intersection(t1.geom,t%d.geom)," + output_epsg + "),6) ", filterResourceIndex)); //todo output epsg
                                 } else {
-                                    selectClause.put("geom", String.format("st_asgeojson(t1.geom,3) ")); //todo output epsg
+                                    selectClause.put("geom", String.format("SDO_UTIL.TO_GEOJSON (t1.geom,3) ")); //todo output epsg
                                 }
                             }
                         }
                         if (task.getQueryParameterValue("noclip") == null) {
-                            selectClause.put("area", String.format("st_area(st_intersection(t1.geom,t%d.geom))", filterResourceIndex));
+                            selectClause.put("area", String.format("sdo_geom.sdo_area(st_intersection(t1.geom,t%d.geom))", filterResourceIndex));
                         } else {
-                            selectClause.put("area", String.format("st_area(t1.geom)"));
+                            selectClause.put("area", String.format("sdo_geom.sdo_area(t1.geom)"));
                         }
                     } else {
                         whereClause.add("t" + filterResourceIndex + ".".concat(q.getName().concat("=").concat(keyValue.toString())));
@@ -495,6 +479,8 @@ public class PostgresQueryBuilder {
             }
 
         }
+        // temp
+        //whereClause.add(" rownum < 10");
         //
         // Start building the query.
         //
@@ -513,7 +499,7 @@ public class PostgresQueryBuilder {
         String from = "\n  from ";
         int aliasNr = 1;
         for (String aaa : fromClause) {
-            queryString = queryString.concat(from).concat(aaa).concat(String.format(" as t%d", aliasNr));
+            queryString = queryString.concat(from).concat(aaa).concat(String.format("  t%d", aliasNr));
             aliasNr++;
             from = "\n     , ";
         }
@@ -559,7 +545,7 @@ public class PostgresQueryBuilder {
                     page_offset *= page_size; // Change from pages to rownrs
                 }
                 // todo orderby if overlay then area first
-                queryString = queryString.concat(String.format(" offset %d limit %d", page_offset, page_size));
+                //queryString = queryString.concat(String.format(" offset %d limit %d", page_offset, page_size));
 //            }
         }
 
@@ -569,7 +555,8 @@ public class PostgresQueryBuilder {
         // Add the child optional queries. When nrofhits the linkcolumns are not present and they are unwanted.
         //
         if (!task.returnJustnrOfHits()) {
-            for (AdapterPostgresResource r : resource.getChildren()) {
+            for (AdapterPostgresResource r
+                    : resource.getChildren()) {
                 AdapterTableResource theRresource = (AdapterTableResource) r;
                 result.addPostgresQuery(buildQueryForChildTableResource(theRresource)); // TODO Cascade into children.
             }

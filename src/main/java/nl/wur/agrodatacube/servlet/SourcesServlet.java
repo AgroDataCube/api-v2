@@ -7,6 +7,9 @@
 * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF
 * ANY KIND, either express or implied.
  */
+
+
+
 package nl.wur.agrodatacube.servlet;
 
 //import io.swagger.annotations.Api;
@@ -21,15 +24,21 @@ import javax.ws.rs.core.Response;
  * @author Rande001
  */
 @Path("/sources")
-@Produces({"application/json"})
+@Produces({ "application/json" })
 public class SourcesServlet extends Worker {
-    
     @GET
     @Path("/")
+
     /**
      * All documentation has been moved to Postman (https://documenter.getpostman.com/view/3862510/RVnSHh76).
      */
     public Response getInformation() {
-        return Response.ok().entity("{ \"Please see the information at \" : \"https://documenter.getpostman.com/view/5525378/S1EQSdKN\" }").build();
-    }    
+        return Response.ok()
+                       .entity(
+                       "{ \"Please see the information at \" : \"https://documenter.getpostman.com/view/5525378/S1EQSdKN\" }")
+                       .build();
+    }
 }
+
+
+//~ Formatted by Jindent --- http://www.jindent.com

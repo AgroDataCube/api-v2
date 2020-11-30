@@ -12,7 +12,6 @@
 
 package nl.wur.agrodatacube.servlet;
 
-//import agrodatacube.wur.nl.result.DateExpression;
 //import io.swagger.annotations.Api;
 import java.util.Properties;
 
@@ -26,24 +25,31 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 /**
- * This servlet returns meteodata, for stations, dates etc. Possible urls are
+ * /meteostations
  *
- * @author Rande001
+ * output_epsg
+ * result
+ * page_size
+ * page_offset
+ * meteostationid
+ *
+ * @author rande001
  */
-@Path("/meteodata")
+@Path("/meteostations")
 
-//@Api(value = "Provide meteodata on station level or on field level. Fields have meteostations assigned to them (based on nearest distance).")
+//@Api(value = "Provide information for meteostations")
 @Produces({ "application/json" })
-public class MeteoDataServlet extends Worker {
-    public MeteoDataServlet() {
+public class MeteoStationsServlet extends Worker {
+    public MeteoStationsServlet() {
         super();
-        setResource("meteodata");
+        setResource("meteostations");
     }
 
     @GET
     @Path("/")
     public Response getMeteoDataInfoGet(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
         Properties props = parametersToProperties(uriInfo);
+
         return getResponse(props, token);
     }
 
@@ -51,39 +57,43 @@ public class MeteoDataServlet extends Worker {
     @Path("/")
     public Response getMeteoDataInfoPost(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
         Properties props = bodyParamsToProperties();
+
+        // if (props.isEmpty())
         props.putAll(parametersToProperties(uriInfo));
+
         return getResponse(props, token);
     }
 
     @GET
-    @Path("/{stationid}/{date}")
-    public Response getMeteoDataInfoStationDateGet(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
+    @Path("/{meteostationid}")
+    public Response getMeteoDatastationInfoGet(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
         Properties props = parametersToProperties(uriInfo);
-        return getResponse(props, token);
-    }
 
-    @POST
-    @Path("/{stationid}/{date}")
-    public Response getMeteoDataInfoStationDatePost(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
-        Properties props = bodyParamsToProperties();
-        props.putAll(parametersToProperties(uriInfo));
         return getResponse(props, token);
-    }
+    }    // String query = String.format("select meteostationid,name,wmocode,lon,lat,alt,source,provider,st_asgeojson(%s geom %s ,%d ) as geom from knmi_meteo_station order by meteostationid ", to4326_begin, to4326_end, getNumberOfdecimals());
 
     @GET
-    @Path("/{stationid}")
-    public Response getMeteoDataInfoStationGet(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
+    @Path("/{meteostationid}/meteodata")
+    public Response getMeteoDatastationInfoGetMd(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
         Properties props = parametersToProperties(uriInfo);
+
+        props.remove("resource");
+        setResource("meteodata");
+
+        // setBaseResource("meteostations");
         return getResponse(props, token);
     }
 
     @POST
-    @Path("/{stationid}")
-    public Response getMeteoDataInfoStationPost(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
+    @Path("/{meteostationid}")
+    public Response getMeteoDatastationInfoPost(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
         Properties props = bodyParamsToProperties();
+
+        // if (props.isEmpty())
         props.putAll(parametersToProperties(uriInfo));
+
         return getResponse(props, token);
-    }
+    }    // String query = String.format("select meteostationid,name,wmocode,lon,lat,alt,source,provider,st_asgeojson(%s geom %s ,%d ) as geom from knmi_meteo_station order by meteostationid ", to4326_begin, to4326_end, getNumberOfdecimals());
 }
 
 

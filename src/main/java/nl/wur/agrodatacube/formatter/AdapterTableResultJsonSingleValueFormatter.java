@@ -21,9 +21,8 @@ import java.util.ArrayList;
 public class AdapterTableResultJsonSingleValueFormatter extends AdapterTableResultJsonFormatter {
 
     @Override
-    public void format(AdapterResult result,
-            Writer w) throws Exception {
-AdapterTableResult table=(AdapterTableResult) result;
+    public void format(AdapterResult result,Writer w) throws Exception {
+        AdapterTableResult table=(AdapterTableResult) result;
         //
         // If it did not succeed return an error
         //
@@ -50,8 +49,7 @@ AdapterTableResult table=(AdapterTableResult) result;
     }
 
     @Override
-    public void format(ArrayList<AdapterResult> tables,
-            Writer w) throws Exception {
+    public void format(ArrayList<AdapterResult> tables,Writer w) throws Exception {
         throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 

@@ -9,6 +9,7 @@
  */
 package nl.wur.agrodatacube.result;
 
+import java.math.BigDecimal;
 import nl.wur.agrodatacube.datasource.metadata.ColumnMetadata;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,92 +37,61 @@ public class AdapterTableResult extends AdapterResult {
         metadata.add(m);
     }
 
+    /**
+     * Sometimes duplicates. So only add if not present. 
+     * @param m 
+     */
     public void addColumnMetadata(ArrayList<ColumnMetadata> m) {
-        metadata.addAll(m);
+        
+        for (ColumnMetadata newMetadata : m) {
+            int i = 0;
+            boolean found= false;
+            for (i = 0; i < metadata.size(); i++) {
+                found= false;
+                ColumnMetadata oldMetaData = metadata.get(i);
+                if (oldMetaData.getColumnName().equalsIgnoreCase(newMetadata.getColumnName())) {
+                    found= true;
+                    break;
+                }
+            }
+            if (! found) {
+                metadata.add(newMetadata);
+            }
+        }
+//        metadata.addAll(m);
     }
 
-//    public AdapterTableResult(String[] columnNames) {
-//        this();
-//        this.columnNames = columnNames;
-//        for (int i = 0; i < columnNames.length; i++) {
-//            if ("geom".equalsIgnoreCase(columnNames[i])) {
-//                geomColumn = i;
-//                break;
-//            }
-//        }
-//
-//        for (int i = 0; i < columnNames.length; i++) {
-//            if ("area".equalsIgnoreCase(columnNames[i])) {
-//                areaColumn = i;
-//                break;
-//            }
-//        }
-//    }
     @Override
-
     protected void clear() {
         columnNames = new String[1];
         columnValues = new ArrayList<>();
     }
 
-//    public void setColumnsNames(String[] names) {
-//        columnNames = names;
-//    }
     public void addRow(Object[] values) {
         addRow(new ArrayList<>(Arrays.asList(values)));
     }
 
+    /**
+     * Oracle returns a BigDecimal for area.
+     * 
+     * @param values 
+     */
     public void addRow(ArrayList<Object> values) {
-
-        // todo area
         if (this.areaColumn >= 0) {
-            if (values.get(this.areaColumn) != null) {
-                setArea(getArea() + (Double) values.get(this.areaColumn));
+            if (values.get(this.areaColumn) != null) 
+                if (values.get(this.areaColumn).getClass()==java.math.BigDecimal.class) {
+                    BigDecimal bd = (BigDecimal) values.get(this.areaColumn);
+                    Double d = bd.doubleValue();
+                    setArea(getArea() + d);
+                } else if (values.get(this.areaColumn).getClass()==java.lang.Double.class) {
+                    setArea(getArea() + (Double) values.get(this.areaColumn));
             }
         }
         columnValues.add(values);
     }
 
-//    /**
-//     * Build an AdapterTableResult from a sql resultset. If this task has child
-//     * resources also include them.
-//     *
-//     * @param rs
-//     * @param pg
-//     * @return
-//     */
-//    public static AdapterTableResult fromSQLResulSet(ResultSet rs, PostgresQuery pg) {
-//        AdapterTableResult result = new AdapterTableResult();
-//        try {
-//
-//            // set the column names
-//            String[] columnNames = new String[rs.getMetaData().getColumnCount()];
-//            int nColumns = rs.getMetaData().getColumnCount();
-//            for (int i = 1; i <= nColumns; i++) {
-//                columnNames[i - 1] = rs.getMetaData().getColumnLabel(i);
-//            }
-//            result = new AdapterTableResult(columnNames);
-//
-//            // add the values to a table (no paging yet)
-//            while (rs.next()) {
-//                ArrayList<Object> row = new ArrayList<>();
-//                if (result.areaColumn >= 0) {
-//                    result.area += (Double) rs.getObject(result.areaColumn + 1); // rs index is 1 based not 0 based.
-//                }
-//                for (int i = 1; i <= nColumns; i++) {
-//                    row.add(rs.getObject(i));
-//                }
-//                result.columnValues.add(row);
-//            }
-//            rs.getStatement().close();
-//            rs.close(); // Niet bij pagination
-//        } catch (Exception e) {
-//            result.setStatus(e.getMessage());
-//        }
-//        return result;
-//    }
     public String getColumnName(int i) {
-        return columnNames[i];
+        return columnNames[i].toLowerCase(); // Oracle returns uppercase.
     }
 
     public int getColumnCount() {
@@ -135,10 +105,6 @@ public class AdapterTableResult extends AdapterResult {
         return columnValues.get(i);
     }
 
-//    public void addRow(ResultSet rs) {
-//
-//    }
-//
     public int getGeomIndex() {
         return (geomColumn);
     }

@@ -15,6 +15,7 @@ package nl.wur.agrodatacube.exec;
  * @author rande001
  */
 
+@Deprecated
 public class Executor {
 
 //    /**

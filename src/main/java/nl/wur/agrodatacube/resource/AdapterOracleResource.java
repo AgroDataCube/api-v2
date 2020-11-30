@@ -16,9 +16,9 @@ import nl.wur.agrodatacube.resource.query.ConfigurationParameter;
  *
  * @author rande001
  */
-public abstract class AdapterPostgresResource extends AdapterResource {
+public abstract class AdapterOracleResource extends AdapterResource {
 
-    protected ArrayList<AdapterPostgresResource> children;
+    protected ArrayList<AdapterOracleResource> children;
     protected String[] linkColumns; // names of the columnsin the parent
     protected String parentName;
     private String[] columns; // komma separated list of column names of valid sql expressions.
@@ -26,7 +26,7 @@ public abstract class AdapterPostgresResource extends AdapterResource {
     private String[] orderBy;
     private String geometryColumn;
 
-    public AdapterPostgresResource(String name) {
+    public AdapterOracleResource(String name) {
         super(name);
         addQueryParameter(new ConfigurationParameter("page_size", "int", null));
         addQueryParameter(new ConfigurationParameter("page_start", "int", null)); // todo check names
@@ -34,11 +34,11 @@ public abstract class AdapterPostgresResource extends AdapterResource {
 
     }
 
-    public ArrayList<AdapterPostgresResource> getChildren() {
+    public ArrayList<AdapterOracleResource> getChildren() {
         return children;
     }
 
-    public void addChildren(AdapterPostgresResource child) {
+    public void addChildren(AdapterOracleResource child) {
         this.children.add(child);
     }
 

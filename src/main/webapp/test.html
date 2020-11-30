@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<!--
+To change this license header, choose License Headers in Project Properties.
+To change this template file, choose Tools | Templates
+and open the template in the editor.
+-->
+<html lang="EN">
+    <head>
+        <title>Goal is to test access from a different webpage without token</title>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <body>
+        <iframe name="adc" src="https://agrodatacube-test.wenr.wur.nl/api/v2/rest/fields?output_epsg=4326&page_size=50&page_offset=0&year=2019&geometry=POLYGON((6.04075%2052.68363,6.04075%2052.69192,6.05053%2052.69192,6.05053%2052.68363,6.04075%2052.68363))&epsg=4326">
+        </iframe>
+        <iframe name="adc1" src="https://agrodatacube-test.wenr.wur.nl/api/v2/rest/fields?output_epsg=4326&page_size=50&page_offset=0&year=2019&geometry=POLYGON((6.04075%2052.68363,6.04075%2052.69192,6.05053%2052.69192,6.05053%2052.68363,6.04075%2052.68363))&epsg=4326">
+        </iframe>
+        <iframe name="adc2" src="https://agrodatacube-test.wenr.wur.nl/api/v2/rest/fields/9368157/ndvi?output_epsg=4326&fromdate=20200101&todate=20210101&page_size=366&page_offset=0">
+        </iframe>
+    </body>
+</html>

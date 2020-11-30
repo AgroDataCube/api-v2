@@ -22,14 +22,11 @@ import java.util.ArrayList;
  */
 public abstract class AdapterTableResultFormatter extends AdapterResultFormatter {
     
+    //
+    // ISO8601 formats (https://nl.wikipedia.org/wiki/ISO_8601)
+    //
     private SimpleDateFormat dateFormatter  = new SimpleDateFormat("yyyy-MM-dd");
-    
-//    protected String formatDate(java.sql.Date date) {
-//        if (date == null) {
-//            return null;
-//        }
-//        return dateFormatter.format(new java.util.Date(date.getTime()));
-//    }
+    private final SimpleDateFormat timestampFormatter =new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
     
     protected String formatDate(Object date) {
         if (date == null) {
@@ -38,6 +35,13 @@ public abstract class AdapterTableResultFormatter extends AdapterResultFormatter
         return  dateFormatter.format((java.sql.Date) date);
     }
     
+    protected String formatTimestamp(Object timestamp) {
+        if (timestamp == null) {
+            return null;
+        }
+        return  timestampFormatter.format((java.sql.Timestamp) timestamp);
+    }
+
     /**
      * Format an AdapterTableResult to string.
      * @param table
@@ -52,11 +56,19 @@ public abstract class AdapterTableResultFormatter extends AdapterResultFormatter
     
     /**
      * Format an AdapterTableResult and write the result to the writer.
-     * @param table
+     * @param tables
      * @param w
      * @throws Exception 
      */
-    
-        
     public abstract void format(ArrayList<AdapterResult> tables, Writer w)throws Exception;
+
+   /**
+    * Functionaliteit toegevoegd om bv bij CSV andere date formatter te gebruiken (bv voor RVO).
+    * 
+    * @param sdf 
+    */
+    protected void setDateFormatter(SimpleDateFormat sdf) {
+        dateFormatter=sdf;
+    }
+    
 }

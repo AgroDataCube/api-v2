@@ -10,20 +10,24 @@
 package nl.wur.agrodatacube.resource.query;
 
 /**
- * This class contains query parameter info.
+ * This class contains configuration parameter info.These parameters can be system parameters or parameters that can be used to query a re
  *
  * @author rande001
  */
-public class QueryParameter {
+public class ConfigurationParameter {
 
     private static int counter = 0;
     String name;
-    String type; // integer, float, date, year, string.  Is based on db type of column
+    String dataType; // integer, float, date, year, string.  Is based on db dataType of column
     String columnName; // when null then results param like page_size,page_start etc. So non SQL parameter.
     String resourceName; // table or resource or ...
     String joinColumn;
     private int id;
+    String match; // default like
+    
 
+    // TODO: Add suggested operator (allows ot distinguish between uri parameters and query parameters) See https://git.wur.nl/rande001/AgroDataCubeAdapter/issues/237
+    
     /**
      * In most cases operator is "=" only with from and todate different.
      *
@@ -40,38 +44,38 @@ public class QueryParameter {
         }
     }
 
-    public QueryParameter() {
+    public ConfigurationParameter() {
         id = ++counter;
     }
 
-    public QueryParameter(String name, String type, String columnName) {
+    public ConfigurationParameter(String name, String type, String columnName) {
         this.name = name.toLowerCase();
-        this.type = type.toLowerCase();
+        this.dataType = type.toLowerCase();
         this.columnName = columnName;
     }
 
     /**
-     * See if o is valid for type.
+     * See if o is valid for dataType.
      *
      * @param o
      * @return
      */
     public boolean valueIsValid(String o) {
         try {
-            if (type.equalsIgnoreCase("integer")) {
+            if (dataType.equalsIgnoreCase("integer")) {
                 Integer.parseInt(o);
-            } else if (type.equalsIgnoreCase("float")) {
+            } else if (dataType.equalsIgnoreCase("float")) {
                 Double.parseDouble(o);
-            } else if (type.equalsIgnoreCase("year")) {
+            } else if (dataType.equalsIgnoreCase("year")) {
                 Integer.parseInt(o);
                 if (o.length() != 4) {
                     return false;
                 }
                 return validatePartialDate(o);
-            } else if (type.equalsIgnoreCase("partialdate")) {
+            } else if (dataType.equalsIgnoreCase("partialdate")) {
                 Integer.parseInt(o);
                 return validatePartialDate(o);
-            } else if (type.equalsIgnoreCase("date")) {
+            } else if (dataType.equalsIgnoreCase("date")) {
                 Integer.parseInt(o);
                 if (o.length() != 8) {
                     return false;
@@ -93,12 +97,12 @@ public class QueryParameter {
         this.name = name;
     }
 
-    public String getType() {
-        return type;
+    public String getDataType() {
+        return dataType;
     }
 
-    public void setType(String type) {
-        this.type = type;
+    public void setDataType(String type) {
+        this.dataType = type;
     }
 
     public String getColumnName() {
@@ -110,26 +114,32 @@ public class QueryParameter {
     }
 
     /**
-     * Convert the string to an object of the appropriate class. This can also
-     * depend on createExpression in PostgresQueryBuilder.
+     * Convert the string to an object of the appropriate class.This can also
+ depend on createExpression in PostgresQueryBuilder.
      *
      * @param o
+     * @param matchExact
      * @return
      */
-    public Object prepareValue(String o) {
+    public Object prepareValue(String o, boolean matchExact) {
         if (o == null) {
             return null;
         }
 
-        if (type.equalsIgnoreCase("integer")) {
+        // TODO Operator meenmenem ivm ondersheid tussen = en like
+        
+        if (dataType.equalsIgnoreCase("integer")) {
             return Integer.parseInt(o);
-        } else if (type.equalsIgnoreCase("float")) {
+        } else if (dataType.equalsIgnoreCase("float")) {
             return Double.parseDouble(o);
-        } else if (type.equalsIgnoreCase("string")) {
+        } else if (dataType.equalsIgnoreCase("string")) {     
+            if (matchExact) {
+                return o;
+            }
             return "%".concat(o).concat("%");
-        } else if (type.equalsIgnoreCase("year")) {
+        } else if (dataType.equalsIgnoreCase("year")) {
             return Integer.parseInt(o);
-        } else if (type.equalsIgnoreCase("partialdate")) {
+        } else if (dataType.equalsIgnoreCase("partialdate")) {
             if (o.length() == 4) {
                 return Integer.parseInt(o);
             } else if (o.length() == 6) {
@@ -210,4 +220,17 @@ public class QueryParameter {
         this.joinColumn = joinColumn;
     }
 
+    /**
+     * Match is only needed for strings. In some cases (PATH params) we want exact match else a like.
+     * @return
+     */
+    public String getMatch() {
+        return (match == null ? "like" : "=");
+    }
+
+    public void setMatch(String match) {
+        this.match = match;
+    }
+    
+    
 }

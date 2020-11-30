@@ -9,9 +9,9 @@
  */
 package nl.wur.agrodatacube.resource;
 
-import nl.wur.agrodatacube.resource.query.QueryParameter;
 import nl.wur.agrodatacube.datasource.AdapterDataSource;
 import java.util.ArrayList;
+import nl.wur.agrodatacube.resource.query.ConfigurationParameter;
 
 /**
  *
@@ -21,8 +21,8 @@ public abstract class AdapterResource {
 
     protected String name;
     protected AdapterDataSource dataSource;
-    protected ArrayList<QueryParameter> possibleQueryParameters;  // parameters that influence the returned result
-    protected ArrayList<QueryParameter> possibleResultParameters;  // parameters that influence how result is returned (paging, nrofhits)
+    protected ArrayList<ConfigurationParameter> possibleQueryParameters;  // parameters that influence the returned result
+    protected ArrayList<ConfigurationParameter> possibleResultParameters;  // parameters that influence how result is returned (paging, nrofhits)
     private boolean resourcesNeedsToken;                          
     // todo: child resources or child queries
     private boolean requiresGeometry;
@@ -50,12 +50,12 @@ public abstract class AdapterResource {
      * 
      * @param q 
      */
-    public final void addQueryParameter(QueryParameter q) {
+    public final void addQueryParameter(ConfigurationParameter q) {
         possibleQueryParameters.add(q);
     }
 
-    public QueryParameter findQueryParameter(String s) {
-        for (QueryParameter q : possibleQueryParameters) {
+    public ConfigurationParameter findQueryParameter(String s) {
+        for (ConfigurationParameter q : possibleQueryParameters) {
             if (q.getName().equalsIgnoreCase(s)) {
                 return q;
             }
@@ -95,7 +95,7 @@ public abstract class AdapterResource {
         return "fields".equalsIgnoreCase(name);
     }
     
-    public ArrayList<QueryParameter> getPossibleQueryParameters() {
+    public ArrayList<ConfigurationParameter> getPossibleQueryParameters() {
         return possibleQueryParameters;
     }
     

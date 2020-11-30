@@ -6,6 +6,8 @@
 * Unless required by applicable law or agreed to in writing, this software
 * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF
 * ANY KIND, either express or implied.
+*
+* This class formats to json instead of geojson. Used when child queries are used.
  */
 package nl.wur.agrodatacube.formatter;
 
@@ -13,7 +15,6 @@ import nl.wur.agrodatacube.result.AdapterResult;
 import nl.wur.agrodatacube.result.AdapterTableResult;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -22,8 +23,6 @@ import java.util.Iterator;
  * @author Yke
  */
 public class AdapterTableResultJsonFormatter extends AdapterTableResultFormatter {
-
-    private SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd");
 
     public AdapterTableResultJsonFormatter() {
         super();
@@ -49,20 +48,15 @@ public class AdapterTableResultJsonFormatter extends AdapterTableResultFormatter
         //
         // If it did not succeed return an error
         //
-        // Perceel info
         if (!table.didSucceed()) {
             w.write(" { \"status\" : " + JSONizer.toJson(table.getStatus()));
 //            w.write(", \"query\" : " + JSONizer.toJson(table.getQueryString()));
-            w.write("}"); //todo
+            w.write("}"); 
             return;
         }
 
-//        //
-//        // Valid result.
-//        //
-//        w.write("{ ");
         //
-        // add the properties (all parameters etc so NOT the results)
+        // Valid result.
         //
         Iterator<Object> iterator = table.getProps().keySet().iterator();
 
@@ -93,7 +87,9 @@ public class AdapterTableResultJsonFormatter extends AdapterTableResultFormatter
                     }
                     jsonRow += "\"" + table.getColumnName(i) + "\" : ";
                     if (o instanceof java.sql.Date) {
-                        jsonRow += dateFormatter.format(o);
+                        jsonRow += "\""+formatDate(o)+"\"";
+                    } else if (o instanceof java.sql.Timestamp) {
+                        jsonRow += "\""+formatTimestamp(o)+"\"";
                     } else if (o instanceof java.lang.String) {
                         jsonRow += JSONizer.toJson(row.get(i));
                     } else if (o instanceof nl.wur.agrodatacube.result.AdapterTableResult) {

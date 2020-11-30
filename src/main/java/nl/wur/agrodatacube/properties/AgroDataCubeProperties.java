@@ -47,7 +47,7 @@ public class AgroDataCubeProperties {
         // todo improve fixed OS independant location
         String[] filenames = new String[4];
         filenames[0] = "/var/lib/tomcat/webapps/agrodatacube_v2.properties";           // Productie WENR
-        filenames[1]= "/opt/tomcat/agrodatacube/webapps/agrodatacube_v2.properties";   // Test site WENR
+        filenames[1]= "/opt/tomcat-apps/agrodatacube/webapps/agrodatacube_v2.properties";   // Test site WENR
         filenames[2]= "D:/software/tomcat/apache-tomcat-8.0.53 - dev/agrodatacube_v2.properties";   // Development
         filenames[3] = "agrodatacube_v2.properties";                                   // Development WENR
 
@@ -75,8 +75,12 @@ public class AgroDataCubeProperties {
         return props.getProperty(key, defaultValue);
     }
 
-    public static Integer getDefaultPageSizeLimit() {
+    public static Integer getDefaultPageSize() {
         return Integer.parseInt(getValue(PAGE_SIZE_LIMIT, "50"));
+    }
+
+    public static Integer getPageSizeLimit() {
+        return Integer.parseInt(getValue(PAGE_SIZE_LIMIT, "10000"));
     }
 
     public static String getEmailSender() {

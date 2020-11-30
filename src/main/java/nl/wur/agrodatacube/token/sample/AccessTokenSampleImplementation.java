@@ -41,7 +41,8 @@ public class AccessTokenSampleImplementation extends AccessToken {
         this.setRequestLimit(requestLimit);
         this.setAreaLimit(areaLimit);
         this.setIssuedTo(issuedTo);
-        // builder bestaat nog niet dus token is nullthis.stringValue = this.toString();
+        // builder bestaat nog niet dus token is null this.stringValue = this.toString();
+
     }
 
     public AccessTokenSampleImplementation() {

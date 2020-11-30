@@ -27,7 +27,7 @@ import java.util.Date;
  */
 public class AccessTokenFactoryWURImplementation extends AccessTokenFactory {
 
-    private static String ALGORITHM_KEY = "From Properties file"; // Big Data is hot in this year
+    private static String ALGORITHM_KEY = "From Properties file"; 
     private static Algorithm algorithm = null;
     private static AccessTokenFactoryWURImplementation instance;
 
@@ -52,8 +52,7 @@ public class AccessTokenFactoryWURImplementation extends AccessTokenFactory {
     }
 
     @Override
-    public nl.wur.agrodatacube.token.AccessToken decodeToken(
-            String tokenAsString) {
+    public nl.wur.agrodatacube.token.AccessToken decodeToken(String tokenAsString) {
         if (tokenAsString == null) {
             throw new RuntimeException("No token supplied, see https://agrodatacube.wur.nl/api/register.jsp !!!!!!!");
         }
@@ -126,31 +125,4 @@ public class AccessTokenFactoryWURImplementation extends AccessTokenFactory {
         AccessToken t = createToken(resources, new Date(c.getTimeInMillis()), FREE_MAX_REQUESTS, FREE_MAX_AREA, "public (Open Data)");
         return t;
     }
-
-//    public static void main(String[] args) throws Exception {
-//        String[] tokens = new String[10000];
-//
-//        AccessTokenFactory fact = new AccessTokenFactoryWURImplementation();
-//        String[] resources = {"*"};
-//        Date expDate = new Date(System.currentTimeMillis());
-//        int requestLimit = 25000;
-//        double areaLimit = 10000000;
-//        String issuedTo = "a.a";
-//
-//        for (int i = 0; i < 10000; i++) {
-//            AccessToken token = fact.createToken(resources, expDate, requestLimit, areaLimit, issuedTo);
-//            tokens[i] = token.toString();
-//        }
-//
-//        int n = 0;
-//        for (int i = 0; i < 10000; i++) {
-//            for (int j = i; j < 10000; j++) {
-//                if (j != i) {
-//                    if (tokens[j].equalsIgnoreCase(tokens[i])) { n++; }
-//                }
-//            }
-//        }
-//
-//        System.out.println(n);
-//    }
 }

@@ -30,9 +30,6 @@ import java.util.ArrayList;
  */
 public class AgroDataCubeRegistry {
 
-//            filenames[0] = "/var/lib/tomcat/webapps/agrodatacube.properties";           // Productie WENR
-//        filenames[1]= "/opt/tomcat/agrodatacube/webapps/agrodatacube.properties";   // Test site WENR
-//        filenames[2] = "agrodatacube.properties";                                   // Development WENR
     private static AgroDataCubeRegistry instance;
 
     private final ArrayList<AdapterResource> resources;
@@ -101,6 +98,7 @@ public class AgroDataCubeRegistry {
                 AdapterDataSource r = DatasourceFactory.create((JsonObject) o);
                 dataSources.add(r);
                 System.out.println(String.format("Added datasource %s, type = %s", r.getName(), r.getClass().getName()));
+                System.out.flush();
             }
 
             JsonArray jsonRresources = (JsonArray) registryJson.get("resources");
@@ -122,7 +120,7 @@ public class AgroDataCubeRegistry {
                     if (r.getParentName() != null) {
                         AdapterPostgresResource p = (AdapterPostgresResource) findResource(r.getParentName());
                         if (p == null) {
-                            System.out.println(String.format("Unable to add no existing resource %s as parent to %s", r.getParentName(), r.getName()));
+                            System.out.println(String.format("Unable to add non existing resource %s as parent to %s", r.getParentName(), r.getName()));
                         } else {
                             p.addChildren(r);
                             System.out.println(String.format("Added resource %s as child to %s", r.getName(), p.getName()));

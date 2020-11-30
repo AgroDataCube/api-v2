@@ -17,6 +17,7 @@ public class AdapterImageResource extends AdapterResource {
 
     private String coverageName;
     private String outputFormat;
+    private double areaLimit = 100000000.d; // default 10000 ha limit due to problems with WCS when larger areas. Can be redefined by config.json.
 
     public AdapterImageResource(String name) {
         super(name);
@@ -42,6 +43,14 @@ public class AdapterImageResource extends AdapterResource {
 
     public void setOutputFormat(String outputFormat) {
         this.outputFormat = outputFormat;
+    }
+
+    public double getAreaLimit() {
+        return areaLimit;
+    }
+
+    public void setAreaLimit(double areaLimit) {
+        this.areaLimit = areaLimit;
     }
     
     

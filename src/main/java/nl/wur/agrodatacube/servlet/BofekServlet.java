@@ -7,9 +7,13 @@
 * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF
 * ANY KIND, either express or implied.
  */
+
+
+
 package nl.wur.agrodatacube.servlet;
 
 import java.util.Properties;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -25,40 +29,46 @@ import javax.ws.rs.core.UriInfo;
  * @author rande001
  */
 @Path("/soilparams")
-@Produces({"application/json"})
+@Produces({ "application/json" })
 public class BofekServlet extends Worker {
-
     public BofekServlet() {
         setResource("soilparams");
     }
 
-    
     @GET
     @Path("/{soilparamid}")
     public Response getSoilParamsInfoGet(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
         Properties props = parametersToProperties(uriInfo);
         return getResponse(props, token);
     }
-    
-    @POST
-    @Path("/{soilparamid}")
-    public Response getSoilParamsInfoPost(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
-        Properties props = parametersToProperties(uriInfo);
-        return getResponse(props, token);
-    }
-    
+
     @GET
     @Path("/")
     public Response getSoilParamsInfoGetAll(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
         Properties props = parametersToProperties(uriInfo);
         return getResponse(props, token);
     }
-    
+
     @POST
-    @Path("/")
-    public Response getSoilParamsInfoPostAll(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
-        Properties props = parametersToProperties(uriInfo);
+    @Path("/{soilparamid}")
+    public Response getSoilParamsInfoPost(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
+        Properties props = bodyParamsToProperties();
+
+        // if (props.isEmpty())
+        props.putAll(parametersToProperties(uriInfo));
         return getResponse(props, token);
     }
 
+    @POST
+    @Path("/")
+    public Response getSoilParamsInfoPostAll(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
+        Properties props = bodyParamsToProperties();
+
+        // if (props.isEmpty())
+        props.putAll(parametersToProperties(uriInfo));
+        return getResponse(props, token);
+    }
 }
+
+
+//~ Formatted by Jindent --- http://www.jindent.com

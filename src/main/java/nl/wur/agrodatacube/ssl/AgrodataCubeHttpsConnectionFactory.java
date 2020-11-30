@@ -31,7 +31,7 @@ public class AgrodataCubeHttpsConnectionFactory {
     public AgrodataCubeHttpsConnectionFactory() {
 
         //
-        // Create a trustmanager that accests all critificates.
+        // Create a trustmanager that trust all certificates.
         //
         trustAllCerts = new TrustManager[]{
             new X509TrustManager() {
@@ -47,11 +47,12 @@ public class AgrodataCubeHttpsConnectionFactory {
                 @Override
                 public void checkServerTrusted(X509Certificate[] certs, String authType) {
                 }
-
             }
         };
 
+        //
         // Create all-trusting host name verifier
+        //
         allHostsValid = new HostnameVerifier() {
             @Override
             public boolean verify(String hostname, SSLSession session) {

@@ -7,9 +7,14 @@
 * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF
 * ANY KIND, either express or implied.
  */
+
+
+
 package nl.wur.agrodatacube.servlet;
 
 //import io.swagger.annotations.Api;
+import java.util.Properties;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -31,10 +36,10 @@ import javax.ws.rs.core.UriInfo;
  * @author Rande001
  */
 @Path("/ahn")
-//@Api(value = "Provide information about height for the fields. Height is from the AHN 25m rasterdataset containg average height in a gridcell in cm compared to NAP")
-@Produces({"application/json"})
-public class AHNServlet extends Worker {
 
+//@Api(value = "Provide information about height for the fields. Height is from the AHN 25m rasterdataset containg average height in a gridcell in cm compared to NAP")
+@Produces({ "application/json" })
+public class AHNServlet extends Worker {
     public AHNServlet() {
         super();
         setResource("ahn");
@@ -49,10 +54,11 @@ public class AHNServlet extends Worker {
     @GET
     @Path("")
     public Response getAHNForGeometry(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
-        java.util.Properties props = parametersToProperties(uriInfo);
-        return getResponse(props, token);
+        Properties props = parametersToProperties(uriInfo);
 
+        return getResponse(props, token);
     }
+
     /**
      * Retrieve the zonal statistics for the given geometry.
      *
@@ -62,9 +68,14 @@ public class AHNServlet extends Worker {
     @POST
     @Path("")
     public Response getAHNForGeometrypPost(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
-        java.util.Properties props = parametersToProperties(uriInfo);
-        return getResponse(props, token);
+        Properties props = bodyParamsToProperties();
 
+        // if (props.isEmpty())
+        props.putAll(parametersToProperties(uriInfo));
+
+        return getResponse(props, token);
     }
-    
 }
+
+
+//~ Formatted by Jindent --- http://www.jindent.com

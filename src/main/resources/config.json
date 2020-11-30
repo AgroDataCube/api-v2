@@ -1,20 +1,19 @@
 {
     "system": [{
-            "_comment": "Systemwide params",
-            "_comment_2": " use this data as to feed a metadata service (question from Henk J), investigate relationshiop with postman"
+            "_comment": "Systemwide params"
         }, {
-            "page_limit": 1000
+            "page_limit": 10000
         }, {
             "page_size": 500
         }],
     "resources": [
         {
             "name": "ndvi_image",
-            "datasource": "Alterra Geodesk",
+            "datasource": "Groenmonitor",
             "type": "image",
-            "needsToken": false,
+            "needsToken": true,
             "coverageName": "MD_NDVI",
-            "output_format": "GeoTiff",
+            "output_format": "GeoTIFF",
             "queryParameters": [{
                     "name": "fieldid",
                     "type": "integer",
@@ -76,7 +75,7 @@
             "datasource": "postgresdatasource",
             "type": "table",
             "geometryColumn": "geom",
-            "requiresGeometry":true,
+            "requiresGeometry": true,
             "columns": "year,grondgebruik,crop_code,crop_name,fieldid,area,perimeter",
             "table": "gewaspercelen",
             "needsToken": true,
@@ -145,6 +144,10 @@
                     "type": "integer",
                     "columnName": "fieldid",
                     "resource": "fields"
+                },{
+                    "name": "entityid",
+                    "type": "integer",
+                    "columnName": "id"
                 }]
         },
         {
@@ -180,7 +183,7 @@
         {
             "name": "ndvi",
             "datasource": "postgresdatasource",
-            "columns": "ndvi_avg,ndvi_stddev,ndvi_avg,daynr,datum",
+            "columns": "fieldid,ndvi_avg,ndvi_stddev,ndvi_avg,datum,daynr",
             "type": "table",
             "table": "gewaspercelen_ndvi",
             "needsToken": true,
@@ -198,6 +201,10 @@
                     "type": "partialdate",
                     "columnName": "datum"
                 }, {
+                    "name": "date",
+                    "type": "partialdate",
+                    "columnName": "datum"
+                }, {
                     "name": "fieldid",
                     "type": "integer",
                     "columnName": "fieldid",
@@ -212,6 +219,7 @@
                     "name": "epsg",
                     "type": "integer"
                 }]
+            ,"orderBy": "datum,fieldid"
         }, {
             "name": "gewaspercelen_meteostation",
             "columns": "fieldid",
@@ -307,11 +315,31 @@
             "queryParameters": [{
                     "name": "output_epsg",
                     "type": "integer"
+                }, {
+                    "name": "name",
+                    "type": "string",
+                    "columnName": "name"
+                }, {
+                    "name": "municipality",
+                    "type": "string",
+                    "columnName": "name"
+                }, {
+                    "name": "municipalityid",
+                    "type": "integer",
+                    "columnName": "id"
+                }, {
+                    "name": "fieldid",
+                    "type": "integer",
+                    "columnName": "fieldid",
+                    "resource": "fields"
+                }, {
+                    "name": "noclip",
+                    "type": "void"
                 }]
         }  
         ,
         {
-            "name": "provences",
+            "name": "provinces",
             "datasource": "postgresdatasource",
             "type": "table",
             "table": "provincie_2015",
@@ -321,6 +349,26 @@
             "queryParameters": [{
                     "name": "output_epsg",
                     "type": "integer"
+                }, {
+                    "name": "name",
+                    "type": "string",
+                    "columnName": "name"
+                }, {
+                    "name": "province",
+                    "type": "string",
+                    "columnName": "name"
+                }, {
+                    "name": "provinceid",
+                    "type": "integer",
+                    "columnName": "id"
+                }, {
+                    "name": "fieldid",
+                    "type": "integer",
+                    "columnName": "fieldid",
+                    "resource": "fields"
+                }, {
+                    "name": "noclip",
+                    "type": "void"
                 }]
         }  
         ,
@@ -335,6 +383,26 @@
             "queryParameters": [{
                     "name": "output_epsg",
                     "type": "integer"
+                }, {
+                    "name": "zipcode",
+                    "type": "string",
+                    "columnName": "postcode"
+                }, {
+                    "name": "postalcode",
+                    "type": "string",
+                    "columnName": "postcode"
+                }, {
+                    "name": "postalcodeid",
+                    "type": "integer",
+                    "columnName": "id"
+                }, {
+                    "name": "fieldid",
+                    "type": "integer",
+                    "columnName": "fieldid",
+                    "resource": "fields"
+                }, {
+                    "name": "noclip",
+                    "type": "void"
                 }]
         }  
         ,
@@ -344,7 +412,7 @@
             "type": "table",
             "table": "cropinformation",
             "columns": "*",
-            "needsToken": false,
+            "needsToken": true,
             "queryParameters": [{
                     "name": "cropcode",
                     "type": "string",
@@ -357,7 +425,7 @@
             "type": "table",
             "table": "soilinformation",
             "columns": "*",
-            "needsToken": false,
+            "needsToken": true,
             "queryParameters": [{
                     "name": "soilcode",
                     "type": "string",
@@ -378,7 +446,22 @@
                     "name": "epsg",
                     "type": "integer"
                 }]
-        },        
+        },  
+        {
+            "name": "rvo-ndvi",
+            "datasource": "postgresdatasource",
+            "type": "query",
+            "query": "analytics_rvo_ndvi",
+            "needsToken": true,
+            "queryParameters": [
+                {
+                    "name": "fromdate",
+                    "type": "date"
+                }, {
+                    "name": "todate",
+                    "type": "date"
+                }]
+        },     
         {
             "_comment": "Liever via /fields/.../ndvi_image",
             "name": "groenmonitor-ndvi",
@@ -439,14 +522,39 @@
             "name": "soilparams",
             "datasource": "postgresdatasource",
             "type": "table",
-            "table": "bofek2012_profiles",
-            "columns": "*",
+            "table": "bofek2012",
+            "columns": "bofek2012",
             "needsToken": true,
+            "geometryColumn": "geom",
             "queryParameters": [{
                     "name": "soilparamid",
                     "type": "integer",
                     "columnName": "bofek2012"
+                }, {
+                    "name": "fieldid",
+                    "type": "integer",
+                    "columnName": "fieldid",
+                    "resource": "fields"
+                }, {
+                    "name": "geometry",
+                    "type": "string",
+                    "columnName": "geom",
+                    "resource": "fields"
+                }, {
+                    "name": "epsg",
+                    "type": "integer"
                 }]
+        },
+        {
+            "name": "bofek2012_profiles",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "bofek2012_profiles",
+            "columns": "bofek2012,soil_nr,landuse",
+            "needsToken": true,
+            "parent": "soilparams",
+            "linkColumns": "bofek2012",
+            "queryParameters": []
         },
         {
             "name": "bofek2012_layers",
@@ -455,9 +563,130 @@
             "table": "bofek2012_layers",
             "columns": "laag_nr,hor_code,diepte_b,diepte_o,orgstof,orgstof_p10,orgstof_p90,lutum,lutum_p10,lutum_p90,silt,leem,leem_p10,leem_p90,m50,m50_p10,m50_p90,ph_kcl,ph_p10,ph_p90,cac03,a_waarde,materiaal",
             "needsToken": true,
-            "parent": "soilparams",
+            "parent": "bofek2012_profiles",
             "linkColumns": "bofek2012,soil_nr,landuse",
             "queryParameters": []
+        }
+        , {
+            "name": "soilindex",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "soilindex",
+            "columns": "fid,id,i_c_n,i_c_p,i_c_k,i_c_mg,i_c_s,i_c_ph,i_c_cec,i_c_cu,i_c_zn,i_p_cr,i_p_se,i_p_ms,i_p_bc,i_p_du,i_p_co,i_p_wri,i_p_cec,i_b_di,i_b_om,i_b_sf,i_b_sb,i_m,i_bcs,s_c,s_p,s_b,s_m,s_t,rm_c_1,rm_c_2,rm_c_3,rm_p_1,rm_p_2,rm_p_3,rm_b_1,rm_b_2,rm_b_3,fieldid",
+            "needsToken": true,
+            "linkColumns": "fieldid",
+            "geometryColumn": "geom",
+            "queryParameters": [ {
+                    "name": "fieldid",
+                    "type": "integer",
+                    "columnName": "fieldid",
+                    "resource": "fields"
+                }
+            ]
+        } , {
+            "name": "croprotationindex",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "croprotationindex",
+            "columns": "*",
+            "needsToken": true,
+            "linkColumns": "fieldid",
+            "queryParameters": [ {
+                    "name": "fieldid",
+                    "type": "integer",
+                    "columnName": "fieldid",
+                    "resource": "fields"
+                }
+            ]
+        },  {
+            "name": "crophistory",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "crop_history",
+            "columns": "*",
+            "needsToken": true,
+            "linkColumns": "fieldid",
+            "queryParameters": [ {
+                    "name": "fieldid",
+                    "type": "integer",
+                    "columnName": "fieldid"
+                }
+            ]
+        },  {
+            "name": "croprotationindex_history",
+            "datasource": "postgresdatasource",
+            "type": "table",
+            "table": "croprotationindex_history",
+            "columns": "*",
+            "needsToken": true,
+            "linkColumns": "fieldid",
+            "queryParameters": [ {
+                    "name": "fieldid",
+                    "type": "integer",
+                    "columnName": "fieldid"
+                }
+            ]
+            ,"noprint": "fieldid"
+        }, {
+            "name": "pfb",
+            "datasource": "oracledatasource",
+            "type": "table",
+            "table": "pfb_alg",
+            "columns": "pfb_id,x,y,PROJ_C,TKRT_C,PB_VNR,SOORT_PB,X,Y, TD_TKRT_C,PLAATS,MAAND,JAAR,OPSTEL_C,STPC_VOOR,STPC_SUB,STPC_CIJF,STPC_KALK,STPC_ACHT,STPC_VERG,STPC_GT,KE50_VOOR,KE50_LET,KE50_CIJF,KE50_KALK,KE50_ACHT,KE50_VERG,KE50_HEL,GT_C,GHG,GLG,GVG",
+            "needsToken": true,       
+            "geometryColumn" : "shape",
+            "queryParameters": [{
+                    "name": "pfb_id",
+                    "type": "integer",
+                    "columnName": "pfb_id"
+                },{
+                    "name": "stpc_sub",
+                    "type": "string",
+                    "columnName": "stpc_sub"
+                }, {
+                    "name": "geometry",
+                    "type": "string"
+                }, {
+                    "name": "epsg",
+                    "type": "integer"
+                }
+            ]
+        }, {
+            "name": "pfb_laag",
+            "datasource": "oracledatasource",
+            "type": "table",
+            "table": "pfb_laag",
+            "columns": "*",
+            "needsToken": true,            
+            "parent": "pfb",
+            "linkColumns": "pfb_id"
+        }, {
+            "name": "pfb_monster",
+            "datasource": "oracledatasource",
+            "type": "table",
+            "table": "pfb_monster",
+            "columns": "*",
+            "needsToken": true,            
+             "parent": "pfb",
+            "linkColumns": "pfb_id"
+        } , {
+            "name": "pfb_che",
+            "datasource": "oracledatasource",
+            "type": "table",
+            "table": "pfb_che",
+            "columns": "*",
+            "needsToken": true,            
+             "parent": "pfb_monster",
+            "linkColumns": "mon_vnr"
+        }, {
+            "name": "pfb_gra",
+            "datasource": "oracledatasource",
+            "type": "table",
+            "table": "pfb_gra",
+            "columns": "*",
+            "needsToken": true,            
+             "parent": "pfb_monster",
+            "linkColumns": "mon_vnr"
         }
     ]
     , 
@@ -467,6 +696,11 @@
             "name": "postgresdatasource",
             "file": "../agrodatacube_v2.properties",
             "containsregistrationdata": true
+        }, {
+            "type": "oracle",
+            "name": "oracledatasource",
+            "file": "../agrodatacube_v2.properties",
+            "containsregistrationdata": false
         },
         {
             "type": "postgres",
@@ -480,11 +714,10 @@
             "version": "1.0.0"
         },
         {
-            "type": "wcs",
-            "name": "Alterra Geodesk",
-            "url": "http://scomp1250:6080/arcgis/services/SPOT/Spot_NDVI/ImageServer/WCSServer?Service=WCS&Version=1.0.0&Request=GetCoverage&RESX=10&RESY=10",
-            "version": "1.0.0",
-			"_comment":"Only accessible from within WUR"
+            "type": "wcs-gm",
+            "name": "Groenmonitor",
+            "url": "http://data.groenmonitor.nl/geoserver/wcs?SERVICE=WCS&VERSION=1.0.0&REQUEST=GetCoverage&FORMAT=GeoTIFF&RESPONSE_CRS=EPSG:28992&RESX=10&RESY=10",          
+            "version": "1.0.0"
         }
     ]
 }

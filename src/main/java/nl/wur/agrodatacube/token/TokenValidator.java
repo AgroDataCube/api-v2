@@ -55,14 +55,24 @@ public class TokenValidator {
 
         /*
         * If the token does not have a list of resources but only contains '*' it allows access to
-        * all resources. From the early days (genesis phase).
-         */
+        * all resources. From the early days (genesis phase). This is the default but we override this in V2.1
+        *
+        * If access is restricted we can find some rows in db table token_access. 
+        */
+        
+        try {
+            Registration.updateAccessInformation(t);
+        }
+        catch (Exception e) {
+            return new TokenValidationResult(e.getMessage());
+        }
+        
         if (t.getAllowedResources().length == 1) {
             if (AccessToken._WILDCARD_.equalsIgnoreCase(t.getAllowedResources()[0].trim())) {
                 return new TokenValidationResult("");
-            }
+            }            
         }
-
+        
         /*
          * See if there is an element in the allowedResources for this resource.
          */
@@ -104,4 +114,5 @@ public class TokenValidator {
         return true;
     }
 
+  
 }

@@ -1,15 +1,18 @@
 /*
- * Copyright 2018 Wageningen Environmental Research
+ * Copyright 2020 Wageningen Environmental Research
  *
  * For licensing information read the included LICENSE.txt file.
  *
  * Unless required by applicable law or agreed to in writing, this software
  * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF
  * ANY KIND, either express or implied.
+ *
+ * This class handles all wcs requests for the groenmonitor geoserver data.
+ * 
  */
 package nl.wur.agrodatacube.datasource.wcs;
 
-import nl.wur.agrodatacube.datasource.AdapterDataSource;
+import java.io.IOException;
 import nl.wur.agrodatacube.datasource.GeometryProvider;
 import nl.wur.agrodatacube.exec.ExecutorTask;
 import nl.wur.agrodatacube.resource.AdapterImageResource;
@@ -18,32 +21,22 @@ import nl.wur.agrodatacube.result.AdapterResult;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Iterator;
 import javax.net.ssl.HttpsURLConnection;
 import nl.wur.agrodatacube.ssl.AgrodataCubeHttpsConnectionFactory;
 
 /**
- * This class retrieves data from OGC WCS services. 
+ * This class retrieves data from OGC WCS services.
  *
  * @author rande001
  */
-public class WCSAdapterDataSource extends AdapterDataSource {
+public class WCSAdapterDataSourceGroenmonitor extends WCSAdapterDataSource {
 
-    private String baseUrl = null;  // "http://scomp1250:6080/arcgis/services/groenmonitor/DMC_NDVI/ImageServer/WCSServer?SERVICE=WCS&VERSION=1.0.0";
-    private String coverageKeyName = "coverage";// dependant on wcs version this can be coverage or identifier or coverageName
-    private String version;
-    private String defaultOutputFormat = "image/tiff"; // depends on the implementation of the service (vendor dependant, could be read from getcapabilities)
-    protected AgrodataCubeHttpsConnectionFactory httpsConnectionFactory;
-
-    public WCSAdapterDataSource() {
+    public WCSAdapterDataSourceGroenmonitor() {
         super();
         httpsConnectionFactory = new AgrodataCubeHttpsConnectionFactory();
     }
-    
-    
+
     /**
      * Task contains the resource we want data for, the geometry
      *
@@ -60,29 +53,81 @@ public class WCSAdapterDataSource extends AdapterDataSource {
         InputStream input = null;
         AdapterImageResult image = new AdapterImageResult();
         try {
-            // Old test junk
-            //String coverageUrl = baseUrl.concat("&REQUEST=GetCoverage&coverage=1&format=GeoTIFF&RESX=25&RESY=25&crs=EPSG:28992&bbox=200000,400000,210000,425000");
-            //URL u = new URL(coverageUrl);//
-            //URL u  = new URL("https://geodata.nationaalgeoregister.nl/ahn25m/wcs?request=GetCoverage&service=wcs&version=1.1.2&crs=epsg:28992&bbox=200000,400000,210000,425000&coverage=ahn25m&format=image/tiff");
-            // URL u = new URL("http://localhost/recl_infiltr.tif");
+            //
+            // Check WCS for data http://data.groenmonitor.nl/geoserver/wcs?service=WCS&version=2.0.1&request=describecoverage&coverageid=ndvi_20200530 (404 als niet beschikbaar)
+            //
 
+            URL describeCoverageURL = new URL(getBaseUrl());
+            String s = describeCoverageURL.getProtocol().concat("://").concat(describeCoverageURL.getAuthority()).concat(describeCoverageURL.getPath()).concat("?version=2.0.1&request=describecoverage&coverageid=").concat(String.format("groenmonitor:ndvi_%s", task.getQueryParameterValue("date")));
+            describeCoverageURL = new URL(s);
+            try {
+                if (describeCoverageURL.getProtocol().toLowerCase().equalsIgnoreCase("https:")) {
+//                HttpsURLConnection connection = (HttpsURLConnection) u.openConnection();
+                    HttpsURLConnection connection = httpsConnectionFactory.getConnection(describeCoverageURL);
+                    input = connection.getInputStream();
+                } else {
+                    HttpURLConnection connection = (HttpURLConnection) describeCoverageURL.openConnection();
+                    input = connection.getInputStream(); // application/vnd.ogc.se_xml bij text dus fout
+
+                    //
+                    // Als input iets is als 
+                    //
+                    // <?xml version="1.0" encoding="UTF-8"?>
+                    // <ows:ExceptionReport xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ows="http://www.opengis.net/ows/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.0.0" xsi:schemaLocation="http://www.opengis.net/ows/2.0 http://schemas.opengis.net/ows/2.0/owsExceptionReport.xsd">
+                    // 	<ows:Exception exceptionCode="NoSuchCoverage" locator="coverageId">
+                    // 		<ows:ExceptionText>Could not find the requested coverage(s): groenmonitor:ndvi_20210808</ows:ExceptionText>
+                    // 	</ows:Exception>
+                    // </ows:ExceptionReport>
+                    //
+                    // dus Could not find the requested coverage bevat dan niet gevonden
+                    //
+                    byte[] buffer = new byte[81920];
+                    int n;
+                    StringBuilder describeResponseBuilder = new StringBuilder();
+                    while ((n = input.read(buffer)) != -1) {
+                        describeResponseBuilder.append(new String(buffer));
+                    }
+                    input.close();
+                    if (describeResponseBuilder.toString().contains("Could not find the requested coverage")) {
+                         image.setHttpStatusCode(HttpURLConnection.HTTP_NO_CONTENT);
+                         image.setStatus("Geen NDVI beeld beschikbaar op " + task.getQueryParameterValue("date"));
+                         return image;
+                    }
+                }
+            } catch (IOException e) {
+                image.setHttpStatusCode(HttpURLConnection.HTTP_NO_CONTENT);
+                image.setStatus("Geen NDVI beeld beschikbaar op " + task.getQueryParameterValue("date"));
+                return image;
+            }
             //
             // Build the URL by retrieving data from the resource (in the task).
             //
-            String resourceUrl = baseUrl;
+            String resourceUrl = getBaseUrl();
             AdapterImageResource resource = (AdapterImageResource) task.getResource();
             String outputFormat = resource.getOutputFormat();
-            
+
             //
             // Bij nat georeg kan format null zijn.
             if (outputFormat == null) {
                 outputFormat = task.getQueryParameterValue("output_format", getDefaultOutputFormat());
             }
             resourceUrl = resourceUrl.concat("&format=").concat(outputFormat);
-            resourceUrl = resourceUrl.concat("&".concat(getCoverageKeyName()).concat("=").concat(resource.getCoverageName()));
+
+            //
+            // Coveragename grenmonitor:ndvi_yyyymmdd
+            //
+            String coverageName = "";
+            Iterator<Object> iterator = task.getQueryParameters().keySet().iterator();
+            while (iterator.hasNext()) {
+                String key = (String) iterator.next();
+                if (key.equalsIgnoreCase("date")) {
+                    coverageName = String.format("&coverage=groenmonitor:ndvi_%s", task.getQueryParameterValue(key));
+                }
+            }
+            resourceUrl = resourceUrl.concat(coverageName);
 
             // if fieldid is set then return geom for that else return box for supplied geometry
-            double area=0.d;
+            double area = 0.d;
             if (task.getQueryParameterValue("fieldid") != null) {
                 double[] boundingBox = GeometryProvider.getBoundingBox(Integer.parseInt(task.getQueryParameterValue("fieldid")));
                 task.setParameterValue("geometry", String.format("bbox=%f,%f,%f,%f", boundingBox[0], boundingBox[1], boundingBox[2], boundingBox[3]));
@@ -107,28 +152,15 @@ public class WCSAdapterDataSource extends AdapterDataSource {
             image.setArea(area);
             resourceUrl = resourceUrl.concat("&crs=EPSG:").concat(task.getQueryParameterValue("epsg"));
             resourceUrl = resourceUrl.concat("&").concat(task.getQueryParameterValue("geometry"));
-            
+
 //            if (task.getResultParameterValue("output_epsg")!= null) {
 //                resourceUrl = resourceUrl.concat("&targetCRS=EPSG:").concat(task.getResultParameterValue("output_epsg"));
 //            }
-
-            // Other parameters but first drop epsg, geometry and fieldid
-            task.removeQueryParameter("epsg");
-            task.removeQueryParameter("geometry");
-            task.removeQueryParameter("fieldid");
-
-            Iterator<Object> iterator = task.getQueryParameters().keySet().iterator();
-            while (iterator.hasNext()) {
-                String key = (String) iterator.next();
-                if (key.equalsIgnoreCase("date")) {
-                    resourceUrl = resourceUrl.concat("&TIME=").concat(createDatexpression(task.getQueryParameterValue(key)));
-                }
-            }
             URL u = new URL(resourceUrl);
 
             System.out.println(resourceUrl);
             String contentType;
-            if (baseUrl.toLowerCase().contains("https:")) {
+            if (resourceUrl.toLowerCase().contains("https:")) {
 //                HttpsURLConnection connection = (HttpsURLConnection) u.openConnection();
                 HttpsURLConnection connection = httpsConnectionFactory.getConnection(u);
                 input = connection.getInputStream();
@@ -148,7 +180,7 @@ public class WCSAdapterDataSource extends AdapterDataSource {
                 throw new RuntimeException(new String(image.getBytes()));
             }
         } catch (Exception e) {
-            image.setStatus(e.getClass().getName()+" : " + e.getLocalizedMessage());
+            image.setStatus(e.getClass().getName() + " : " + e.getLocalizedMessage());
             image.setHttpStatusCode(500);
             try {
                 if (input != null) {
@@ -159,59 +191,4 @@ public class WCSAdapterDataSource extends AdapterDataSource {
         }
         return image;
     }
-
-    /**
-     * Set the name of the key from the key value pair in the url that defines
-     * the coverage. Should be coverage but ESRI sometimes uses identifier.
-     *
-     * @param coverage
-     */
-    public void setCoverageKeyName(String coverage) {
-        coverageKeyName = coverage;
-    }
-
-    /**
-     * Coverage can be identifier or coverage dependant on wcs
-     * version/implementation.
-     *
-     * @return
-     */
-    public String getCoverageKeyName() {
-        return coverageKeyName;
-    }
-
-    public void setBaseUrl(String baseUrl) {
-        this.baseUrl = baseUrl;
-    }
-
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
-
-    public String getDefaultOutputFormat() {
-        return defaultOutputFormat;
-    }
-
-    /**
-     * Return a valid date expression that can be used by WCS (ESRI ARCGIS Servert). The value has been validated so it is a valid date (yyyymmdd).
-     *
-     * @param queryParameterValue
-     * @return
-     */
-    private String createDatexpression(String queryParameterValue) throws ParseException {
-        
-        SimpleDateFormat sdf = new SimpleDateFormat(("yyyyMMdd"));
-        Date d = sdf.parse(queryParameterValue);
-        sdf.applyPattern("yyy-MM-dd");
-        return sdf.format(d);        
-    }
-
-    protected String getBaseUrl() {
-        return baseUrl;
-    }
-
 }

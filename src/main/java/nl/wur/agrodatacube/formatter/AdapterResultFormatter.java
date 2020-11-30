@@ -22,6 +22,9 @@ public abstract class AdapterResultFormatter {
         if ("series".equalsIgnoreCase(formatterName)) {
             return new AdapterTableResultGeoJsonSeriesFormatter();
         }
+        if ("csv".equalsIgnoreCase(formatterName)) {
+            return new AdapterTableResultCSVFormatter();
+        }
         throw new RuntimeException(String.format("Unable to create a formatter for %s !", formatterName));
     }
 

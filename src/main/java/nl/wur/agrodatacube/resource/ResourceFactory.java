@@ -9,12 +9,12 @@
  */
 package nl.wur.agrodatacube.resource;
 
-import nl.wur.agrodatacube.resource.query.QueryParameter;
 import nl.wur.agrodatacube.registry.AgroDataCubeRegistry;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import nl.wur.agrodatacube.exception.InvalidParameterException;
+import nl.wur.agrodatacube.resource.query.ConfigurationParameter;
 
 /**
  *
@@ -41,6 +41,9 @@ public class ResourceFactory {
                     imageResource.setCoverageName(json.get("coverageName").getAsString());
                     if (json.get("output_format") != null) {
                         imageResource.setOutputFormat(json.get("output_format").getAsString());
+                    }
+                    if (json.get("area_limit")!= null) {
+                        imageResource.setAreaLimit(json.get("area_limit").getAsDouble());
                     }
                     s = imageResource;
                 } else if (type.equalsIgnoreCase("query")) {
@@ -107,12 +110,12 @@ public class ResourceFactory {
 
         JsonArray list = (JsonArray) get;
         for (int i = 0; i < list.size(); i++) {
-            QueryParameter q = new QueryParameter();
+            ConfigurationParameter q = new ConfigurationParameter();
             JsonObject jq = (JsonObject) list.get(i);
             if (jq.get("columnName") != null) {
                 q.setColumnName(jq.get("columnName").getAsString());
             }
-            q.setType(jq.get("type").getAsString());
+            q.setDataType(jq.get("type").getAsString());
             q.setName(jq.get("name").getAsString());
             if (jq.get("resource") != null) {
                 q.setResourceName(jq.get("resource").getAsString());

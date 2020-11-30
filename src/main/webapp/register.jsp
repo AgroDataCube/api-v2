@@ -19,7 +19,7 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <link rel="stylesheet" type="text/css" href="css/agrodatacube.css">
-        <title>AgroDataCube registration page</title>
+        <title>AgroDataCube Registration Page</title>
         <script src="https://code.jquery.com/jquery-3.2.1.js" crossorigin="anonymous"></script>
 
         <script type="text/javascript">

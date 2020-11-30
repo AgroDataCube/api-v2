@@ -1,56 +1,30 @@
+
 /*
- * An analytics task is basically a predefined query that receives a geometry as argument.
+* An analytics task is basically a predefined query that receives a geometry as argument.
  */
 package nl.wur.agrodatacube.servlet;
 
-import nl.wur.agrodatacube.formatter.bww.AdapterTableBWWJSONFormatter;
 import nl.wur.agrodatacube.formatter.AdapterTableResultFormatter;
 import nl.wur.agrodatacube.formatter.AdapterTableResultGeoJsonFormatter;
+import nl.wur.agrodatacube.formatter.bww.AdapterTableBWWJSONFormatter;
 
 /**
  *
  * @author rande001
  */
-
 public class AnalyticsTask {
-
-    String suppliedGeometry;
-    Integer suppliedEpsg = 28992;
-    String name;                     // This is the name that is used in the config table to identify this task
-    String ewktGeometry28992;         // The geometry transformed to 28992
-    Integer perceelid;
-    AdapterTableResultFormatter formatter = null;
-    String token;
+    Integer                     suppliedEpsg = 28992;
+    AdapterTableResultFormatter formatter    = null;
+    String                      suppliedGeometry;
+    String                      name;    // This is the name that is used in the config table to identify this task
+    String                      ewktGeometry28992;    // The geometry transformed to 28992
+    Integer                     perceelid;
+    String                      token;
+    String remoteIp;
+    String requestURL;
 
     public AnalyticsTask() {
         formatter = new AdapterTableResultGeoJsonFormatter();
-    }
-    
-    public String getSuppliedGeometry() {
-        return suppliedGeometry;
-    }
-
-    public void setSuppliedGeometry(String suppliedGeometry) {
-        this.suppliedGeometry = suppliedGeometry;
-    }
-
-    public Integer getSuppliedEpsg() {
-        return suppliedEpsg;
-    }
-
-    public void setSuppliedEpsg(Integer suppliedEpsg) {
-        this.suppliedEpsg = suppliedEpsg;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-        if (name.toLowerCase().startsWith("bww-")) {
-            formatter = new AdapterTableBWWJSONFormatter(this);
-        }
     }
 
     public String getEwktGeometry28992() {
@@ -59,6 +33,26 @@ public class AnalyticsTask {
 
     public void setEwktGeometry28992(String ewktGeometry28992) {
         this.ewktGeometry28992 = ewktGeometry28992;
+    }
+
+    public AdapterTableResultFormatter getFormatter() {
+        return formatter;
+    }
+
+    public void setFormatter(AdapterTableResultFormatter formatter) {
+        this.formatter = formatter;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+
+        if (name.toLowerCase().startsWith("bww-")) {
+            formatter = new AdapterTableBWWJSONFormatter(this);
+        }
     }
 
     public Integer getPerceelid() {
@@ -71,23 +65,34 @@ public class AnalyticsTask {
         } else {
             this.perceelid = perceelid;
         }
-
     }
-    
-    public boolean isValid() {
+
+    public boolean isRunnable() {
+        if (token == null) {
+            return false;
+        }
+
         if (suppliedGeometry == null) {
             return false;
         }
-        
-        if (suppliedGeometry.trim().length()==0) {
-            return false;
-        }
-        
+
         return true;
     }
 
-    public AdapterTableResultFormatter getFormatter() {
-        return formatter;
+    public Integer getSuppliedEpsg() {
+        return suppliedEpsg;
+    }
+
+    public void setSuppliedEpsg(Integer suppliedEpsg) {
+        this.suppliedEpsg = suppliedEpsg;
+    }
+
+    public String getSuppliedGeometry() {
+        return suppliedGeometry;
+    }
+
+    public void setSuppliedGeometry(String suppliedGeometry) {
+        this.suppliedGeometry = suppliedGeometry;
     }
 
     public String getToken() {
@@ -97,15 +102,35 @@ public class AnalyticsTask {
     public void setToken(String tokenString) {
         this.token = tokenString;
     }
-    
-    public boolean isRunnable() {
-        if (token==null) {
+
+    public boolean isValid() {
+        if (suppliedGeometry == null) {
             return false;
         }
-        
-        if (suppliedGeometry ==null) {
+
+        if (suppliedGeometry.trim().length() == 0) {
             return false;
         }
+
         return true;
     }
+
+    public String getRemoteIp() {
+        return remoteIp;
+    }
+
+    public void setRemoteIp(String remoteIp) {
+        this.remoteIp = remoteIp;
+    }
+
+    public String getRequestURL() {
+        return requestURL;
+    }
+
+    public void setRequestURL(String requestURL) {
+        this.requestURL = requestURL;
+    }
 }
+
+
+//~ Formatted by Jindent --- http://www.jindent.com

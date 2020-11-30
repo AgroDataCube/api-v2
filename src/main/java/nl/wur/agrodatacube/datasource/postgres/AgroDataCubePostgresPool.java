@@ -26,7 +26,7 @@ public class AgroDataCubePostgresPool {
     public AgroDataCubePostgresPool() {
         pool = new PGPoolingDataSource();
         // pool.setReceiveBufferSize(port);
-        pool.setApplicationName("AgroDataCube V 2.0 March 2019");
+        pool.setApplicationName("AgroDataCube V 2.1 November 2020");
     }
 
     public Connection getConnection() {

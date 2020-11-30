@@ -7,10 +7,14 @@
 * is distributed on an "AS IS" basis, WITHOUT WARRANTIES OR CONDITIONS OF
 * ANY KIND, either express or implied.
  */
+
+
+
 package nl.wur.agrodatacube.servlet;
 
 //import io.swagger.annotations.Api;
 import java.util.Properties;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
@@ -25,10 +29,10 @@ import javax.ws.rs.core.UriInfo;
  * @author Rande001
  */
 @Path("/soiltypes")
-//@Api(value = "Provide information about soils")
-@Produces({"application/json"})
-public class SoilServlet extends Worker {
 
+//@Api(value = "Provide information about soils")
+@Produces({ "application/json" })
+public class SoilServlet extends Worker {
     public SoilServlet() {
         super();
         setResource("soiltypes");
@@ -39,15 +43,31 @@ public class SoilServlet extends Worker {
     public Response getSoilInfoGet(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
         Properties props = parametersToProperties(uriInfo);
         return getResponse(props, token);
-        //return Response.status(200).entity("{\"status\": \"/fields? not yet implemented \"}").build();
+        // return Response.status(200).entity("{\"status\": \"/fields? not yet implemented \"}").build();
     }
-    
+
+    @GET
+    @Path("/{entityid}")
+    public Response getSoilInfoGetForEntity(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
+        Properties props = parametersToProperties(uriInfo);
+        return getResponse(props, token);
+        // return Response.status(200).entity("{\"status\": \"/fields? not yet implemented \"}").build();
+    }
+
     @POST
     @Path("/")
     public Response getSoilInfoPost(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
-        Properties props = parametersToProperties(uriInfo);
-        props.put("resourcename", "fields");
+        Properties props = bodyParamsToProperties();
+        props.putAll(parametersToProperties(uriInfo));
         return getResponse(props, token);
-        //return Response.status(200).entity("{\"status\": \"/fields? not yet implemented \"}").build();
+
+        // return Response.status(200).entity("{\"status\": \"/fields? not yet implemented \"}").build();
+    }
+    
+    @POST
+    @Path("/{entityid}")
+    public Response getSoilInfoPostForEntity(@Context UriInfo uriInfo, @HeaderParam("token") String token) {
+        Properties props = parametersToProperties(uriInfo);
+        return getResponse(props, token);
     }
 }

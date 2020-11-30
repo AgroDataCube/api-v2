@@ -19,8 +19,9 @@ import nl.wur.agrodatacube.token.TokenValidator;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
-import javax.xml.ws.http.HTTPException;
 import nl.wur.agrodatacube.datasource.GeometryProvider;
+import nl.wur.agrodatacube.properties.AgroDataCubeProperties;
+import nl.wur.agrodatacube.servlet.WorkerParameter;
 
 /**
  * An executor task contains data what to with what. So it contains
@@ -39,12 +40,15 @@ public class ExecutorTask {
     private final java.util.Properties resultParameters; // supplied result parameters e.g pae_size, page_offset etc
     private boolean includeChildren = true;
     private String remoteIp; // needed for dashboard
+//    private boolean byPassTokens = false; Gebruikt voor resourceexists
+//    private boolean ignorePageSizeLimit = false;
+    private String requestURL;
 
     public ExecutorTask(AdapterResource resource) {
         this.resource = resource;
         queryParameters = new java.util.Properties();
         resultParameters = new java.util.Properties();
-        resultParameters.put("page_size", "20");
+        resultParameters.put("page_size", ""+AgroDataCubeProperties.getDefaultPageSize());
         resultParameters.put("page_offset", "0");
     }
 
@@ -52,26 +56,26 @@ public class ExecutorTask {
         //
         // Extract the optional token and remove from parameter list immediatly so avoid problems in further processing (parameter "token" not allowed etc)
         //
-        
+
         String token = getQueryParameterValue("token");
         removeQueryParameter("token");
 
-        if (resource.needsToken()) {
-            if (!Registration.tokenIsKnown(token)) {
-                AdapterResult result = new AdapterTableResult();
-                result.setStatus("Unknown token or token exceeded limits. Please request a new token at https://agrodatacube.wur.nl/api/register.jsp or contact us at info.agrodatacube@wur.nl");
-                result.setHttpStatusCode(401);
-                return result;
-            }
-            TokenValidationResult tokenAllowsAccess = TokenValidator.tokenAllowsAccess(token, this.getResource().getName());
-            if (!tokenAllowsAccess.isOk()) {
-                AdapterResult result = new AdapterTableResult();
-                result.setStatus(String.format("This token does not allow access to the resource \"%s\"", this.getResource().getName()));
-                result.setHttpStatusCode(403);
-                return result;
+//        if (!byPassTokens) {
+            //
+            // In some cases needed see worker.resourceExists
+            //
+            if (resource.needsToken()) {
 
+                // moved part to worker.getResponse(props,token).
+                TokenValidationResult tokenAllowsAccess = TokenValidator.tokenAllowsAccess(token, this.getResource().getName());
+                if (!tokenAllowsAccess.isOk()) {
+                    AdapterResult result = new AdapterTableResult();
+                    result.setStatus(String.format("This token does not allow access to the resource \"%s\"", this.getResource().getName()));
+                    result.setHttpStatusCode(403);
+                    return result;
+                }
             }
-        }
+//        }
 
         if (resource.requiresGeometry()) {
             if (!this.hasGeometryParameter()) {
@@ -81,16 +85,15 @@ public class ExecutorTask {
                 return result;
             }
         }
-        
+
         //
         // If geometry parameter is supplied then do a validation.
         //
-        
         if (getQueryParameterValue("geometry") != null) {
             String geom = getQueryParameterValue("geometry");
-            String epsg = getQueryParameterValue("epsg","28992");
+            String epsg = getQueryParameterValue("epsg", "28992");
             String isOk = GeometryProvider.validateGeometry(geom, epsg);
-            if ( ! "ok".equalsIgnoreCase(isOk)) {
+            if (!"ok".equalsIgnoreCase(isOk)) {
                 AdapterResult result = new AdapterTableResult();
                 result.setStatus(isOk);
                 result.setHttpStatusCode(422);
@@ -101,9 +104,17 @@ public class ExecutorTask {
         // If token is valid and provides access then do it. Also log the area.
         //
         AdapterResult result = resource.getDataSource().execute(this);
-        if (resource.needsToken()) {
-            Registration.updateUsageInformation(token, result.getArea(), remoteIp);
-        }
+        
+        // 
+        // Log the area, only if we are not in bypasstoken (internal mode) and the resourec needs a token
+        //
+        
+//        if (!this.byPassTokens) { // In some cases neede for internal use 
+            if (resource.needsToken()) {
+                Integer tokenId= Registration.getTokenid(token);
+                Registration.updateUsageInformation(token, result.getArea(), remoteIp, this.requestURL);
+            }
+//        }
         return result;
     }
 
@@ -152,13 +163,14 @@ public class ExecutorTask {
     }
 
     /**
-     * Return the value for a given query parameter.
+     * Return the value for a given query parameter. Value is a WorkerParameter
+     * and not an object anymore.
      *
      * @param paramName
      * @return
      */
     public String getQueryParameterValue(String paramName) {
-        return (String) queryParameters.get(paramName.toLowerCase());
+        return getQueryParameterValue(paramName, null);
     }
 
     public String getResultParameterValue(String paramName) {
@@ -173,7 +185,11 @@ public class ExecutorTask {
      * @return
      */
     public String getQueryParameterValue(String paramName, String defaultValue) {
-        return (String) queryParameters.getOrDefault(paramName.toLowerCase(), defaultValue);
+        WorkerParameter w = (WorkerParameter) queryParameters.get(paramName.toLowerCase());
+        if (w != null) {
+            return w.getValue().toString();
+        }
+        return defaultValue;
     }
 
     /**
@@ -187,7 +203,7 @@ public class ExecutorTask {
         while (iterator.hasNext()) {
             String key = (String) iterator.next().getKey();
             if (ResultParameter.isResultParameter(key)) {
-                resultParameters.put(key, props.get(key));
+                resultParameters.put(key, ((WorkerParameter) props.get(key)).getValue());
             } else {
                 queryParameters.put(key, props.get(key));
             }
@@ -203,9 +219,9 @@ public class ExecutorTask {
      */
     public void setParameterValue(String paramName, String value) {
         if (value != null) {
-            queryParameters.put(paramName.toLowerCase(), value);
+            queryParameters.put(paramName.toLowerCase(), new WorkerParameter(value, WorkerParameter.WorkerParameterType.QUERY));
         } else {
-            queryParameters.put(paramName.toLowerCase(), "set"); // Fake value because null values are not allowed.            
+            queryParameters.put(paramName.toLowerCase(), new WorkerParameter("set", WorkerParameter.WorkerParameterType.QUERY)); // Fake value because null values are not allowed.            
         }
     }
 
@@ -220,18 +236,6 @@ public class ExecutorTask {
         // todo alldata
         return false;
     }
-
-//    public boolean returnAllData() {
-//        String s = getResultParameterValue("result");
-//        if (s == null) {
-//            return false;
-//        }
-//        if (s.equalsIgnoreCase("alldata")) {
-//            return true;
-//        }
-//        // todo alldata
-//        return false;
-//    }
 
     public boolean returnNoGeom() {
         String s = getResultParameterValue("result");
@@ -260,4 +264,21 @@ public class ExecutorTask {
     public void setRemoteIp(String remoteIp) {
         this.remoteIp = remoteIp;
     }
+
+//    public void setByPassTokens() {
+//        byPassTokens = true;
+//    }
+//
+//    public boolean isIgnorePageSizeLimit() {
+//        return ignorePageSizeLimit;
+//    }
+//
+//    public void setIgnorePageSizeLimit(boolean ignorePageSizeLimit) {
+//        this.ignorePageSizeLimit = ignorePageSizeLimit;
+//    }
+
+    public void setRequestURL(String requestURL) {
+        this.requestURL = requestURL;
+    }
+    
 }

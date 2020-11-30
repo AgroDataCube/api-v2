@@ -73,7 +73,7 @@ public class AdapterTableResultGeoJsonFormatter extends AdapterTableResultJsonFo
         AdapterTableResult table = (AdapterTableResult) result;
         if (!table.didSucceed()) {
             w.write(" { \"status\" : " + JSONizer.toJson(table.getStatus()));
-//            w.write(", \"query\" : " + JSONizer.toJson(table.getQueryString()));
+            w.write(", \"query\" : " + JSONizer.toJson(table.getQueryString()));
             w.write("}"); //todo
             w.flush();
             return;
@@ -93,7 +93,7 @@ public class AdapterTableResultGeoJsonFormatter extends AdapterTableResultJsonFo
         while ((row = table.getRow(j)) != null) {
 
             //
-            // New featre so create header.
+            // New feature so create header.
             //
             geojsonResult = geojsonResult.concat(komma);
 
@@ -132,6 +132,8 @@ public class AdapterTableResultGeoJsonFormatter extends AdapterTableResultJsonFo
                             geojsonResult += "\"" + table.getColumnName(i) + "\" : " + (row.get(i) == null ? "null" : "\"" + row.get(i) + "\"");
                         } else if (row.get(i) instanceof java.sql.Date) {
                             geojsonResult += "\"" + table.getColumnName(i) + "\" : " + (row.get(i) == null ? "null" : "\"" + formatDate(row.get(i)) + "\""); // TODO: Formatter ivm datum
+                        } else if (row.get(i) instanceof java.sql.Timestamp) { // 2012-04-23T18:25:43.511Z preferred
+                            geojsonResult += "\"" + table.getColumnName(i) + "\" : " + (row.get(i) == null ? "null" : "\"" + formatTimestamp(row.get(i)) + "\""); // TODO: Formatter ivm datum
                         } else if (row.get(i) instanceof AdapterTableResult) {
                             AdapterTableResultJsonFormatter f = new AdapterTableResultJsonFormatter();
                             geojsonResult += "\"" + table.getColumnName(i) + "\" : " + f.format((AdapterTableResult) row.get(i));
